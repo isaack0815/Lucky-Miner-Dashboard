@@ -33,9 +33,17 @@ import { MinerService } from '../services/miner.service';
             <select id="model" formControlName="model" class="form-input">
               <option value="v06">LuckyMiner v06</option>
               <option value="v07">LuckyMiner v07</option>
-              <option value="other">Anderes Modell</option>
+              <option value="v08">LuckyMiner v08</option>
+              <option value="other">Anderes Modell (Eigene Eingabe)</option>
             </select>
           </div>
+
+          @if (minerForm.get('model')?.value === 'other') {
+            <div class="form-group" style="animation: fadeIn 0.2s ease-out;">
+              <label for="customModel">Eigener Modellname</label>
+              <input type="text" id="customModel" formControlName="customModel" placeholder="z.B. NerdMiner v2" class="form-input">
+            </div>
+          }
 
           <div class="modal-footer">
             <button type="button" class="btn-secondary" (click)="close.emit()">Abbrechen</button>
@@ -190,14 +198,21 @@ export class AddMinerModalComponent {
     this.minerForm = this.fb.group({
       name: ['', Validators.required],
       ipAddress: ['', [Validators.required, Validators.pattern('^([0-9]{1,3}\\.){3}[0-9]{1,3}$')]],
-      model: ['v06', Validators.required]
+      model: ['v06', Validators.required],
+      customModel: [''] // Neues Feld für die eigene Eingabe
     });
   }
 
   onSubmit() {
     if (this.minerForm.valid) {
-      const { name, ipAddress, model } = this.minerForm.value;
-      this.minerService.addMiner(name, ipAddress, model);
+      const formValue = this.minerForm.value;
+      
+      // Wenn "other" ausgewählt ist, nehmen wir den Wert aus dem customModel-Feld, sonst den Standardwert
+      const finalModel = formValue.model === 'other' 
+        ? (formValue.customModel || 'Custom') 
+        : formValue.model;
+
+      this.minerService.addMiner(formValue.name, formValue.ipAddress, finalModel);
       this.close.emit();
     }
   }

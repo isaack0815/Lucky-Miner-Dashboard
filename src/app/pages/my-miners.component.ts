@@ -46,7 +46,8 @@ import { AddMinerModalComponent } from '../components/add-miner-modal.component'
                   <div class="status-indicator" [class.offline]="miner.status === 'offline'" [class.online]="miner.status === 'online'"></div>
                   <h3 class="miner-name">{{ miner.name }}</h3>
                 </div>
-                <span class="badge">{{ miner.model === 'v06' ? 'v06' : miner.model === 'v07' ? 'v07' : 'Custom' }}</span>
+                <!-- Zeigt nun dynamisch den Namen des Modells an -->
+                <span class="badge">{{ miner.model }}</span>
               </div>
               
               <div class="miner-details">
