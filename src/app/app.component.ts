@@ -16,23 +16,29 @@ import { NavigationService } from './services/navigation.service';
       <div class="main-wrapper">
         <app-header></app-header>
         <main class="content-area">
-          @switch (nav.currentView()) {
-            @case ('dashboard') {
-              <app-dashboard></app-dashboard>
+          <div class="page-content">
+            @switch (nav.currentView()) {
+              @case ('dashboard') {
+                <app-dashboard></app-dashboard>
+              }
+              @case ('miners') {
+                <app-my-miners></app-my-miners>
+              }
+              @case ('stats') {
+                <app-stats></app-stats>
+              }
+              @default {
+                <div style="padding: 2rem; text-align: center; color: var(--text-muted);">
+                  <h2>Seite im Aufbau</h2>
+                  <p>Dieser Bereich wird demnächst verfügbar sein.</p>
+                </div>
+              }
             }
-            @case ('miners') {
-              <app-my-miners></app-my-miners>
-            }
-            @case ('stats') {
-              <app-stats></app-stats>
-            }
-            @default {
-              <div style="padding: 2rem; text-align: center; color: var(--text-muted);">
-                <h2>Seite im Aufbau</h2>
-                <p>Dieser Bereich wird demnächst verfügbar sein.</p>
-              </div>
-            }
-          }
+          </div>
+          
+          <footer class="app-footer">
+            <p>&copy; 2024 vms1-scripte.de - Alle Rechte vorbehalten.</p>
+          </footer>
         </main>
       </div>
     </div>
@@ -56,7 +62,22 @@ import { NavigationService } from './services/navigation.service';
     .content-area {
       flex: 1;
       overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .page-content {
+      flex-grow: 1;
       padding-bottom: 2rem;
+    }
+
+    .app-footer {
+      text-align: center;
+      padding: 1.5rem;
+      margin-top: auto;
+      color: var(--text-muted);
+      font-size: 0.875rem;
+      border-top: 1px solid #E5E7EB;
     }
 
     /* Scrollbar Styling for webkit */

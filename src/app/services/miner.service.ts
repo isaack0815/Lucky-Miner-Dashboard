@@ -11,18 +11,13 @@ export class MinerService {
   private readonly STORAGE_KEY = 'luckyminers_data';
   private http = inject(HttpClient);
 
-  // Signal für die Miner-Liste
   miners = signal<Miner[]>(this.loadFromStorage());
-
-  // NEU: Suchbegriff und abgeleitete, gefilterte Liste
   searchTerm = signal<string>('');
   
   filteredMiners = computed(() => {
     const term = this.searchTerm().toLowerCase().trim();
     const allMiners = this.miners();
-    
     if (!term) return allMiners;
-    
     return allMiners.filter(m => 
       m.name.toLowerCase().includes(term) || 
       m.ipAddress.includes(term) ||
@@ -30,7 +25,6 @@ export class MinerService {
     );
   });
 
-  // Abgeleitete Signale für das Dashboard
   totalMiners = computed(() => this.miners().length);
   onlineMiners = computed(() => this.miners().filter(m => m.status === 'online').length);
   
@@ -69,13 +63,8 @@ export class MinerService {
   }
 
   private getApiUrl(ip: string, endpoint: string): string {
-    const USE_LOCAL_PROXY = false;
-    if (USE_LOCAL_PROXY) {
-      return `/api-proxy/${ip}${endpoint}`;
-    } else {
-      const cleanIp = ip.replace(/^https?:\/\//, '');
-      return `http://${cleanIp}${endpoint}`;
-    }
+    const cleanIp = ip.replace(/^https?:\/\//, '');
+    return `http://${cleanIp}${endpoint}`;
   }
 
   private startPolling() {
@@ -116,11 +105,7 @@ export class MinerService {
   }
 
   addMiner(name: string, ipAddress: string, model: string) {
-    // Generiert eine eindeutige ID, die auch auf HTTP-Seiten funktioniert
-    const generateId = () => {
-      return Date.now().toString(36) + Math.random().toString(36).substring(2, 9);
-    };
-
+    const generateId = () => Date.now().toString(36) + Math.random().toString(36).substring(2, 9);
     const newMiner: Miner = {
       id: generateId(),
       name,
@@ -134,6 +119,14 @@ export class MinerService {
     };
     this.miners.update(current => [...current, newMiner]);
     this.refreshAll();
+  }
+
+  // NEU: Funktion zum Bearbeiten eines Miners
+  updateMiner(id: string, name: string, ipAddress: string, model: string) {
+    this.miners.update(current => current.map(m => 
+      m.id === id ? { ...m, name, ipAddress, model } : m
+    ));
+    this.refreshAll(); // Daten nach dem Update direkt neu laden
   }
 
   deleteMiner(id: string) {

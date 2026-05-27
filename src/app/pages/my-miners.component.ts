@@ -2,11 +2,13 @@ import { Component, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MinerService } from '../services/miner.service';
 import { AddMinerModalComponent } from '../components/add-miner-modal.component';
+import { EditMinerModalComponent } from '../components/edit-miner-modal.component';
+import { Miner } from '../models/miner.model';
 
 @Component({
   selector: 'app-my-miners',
   standalone: true,
-  imports: [CommonModule, AddMinerModalComponent],
+  imports: [CommonModule, AddMinerModalComponent, EditMinerModalComponent],
   template: `
     <div class="page-container">
       <div class="page-header">
@@ -46,7 +48,6 @@ import { AddMinerModalComponent } from '../components/add-miner-modal.component'
                   <div class="status-indicator" [class.offline]="miner.status === 'offline'" [class.online]="miner.status === 'online'"></div>
                   <h3 class="miner-name">{{ miner.name }}</h3>
                 </div>
-                <!-- Zeigt nun dynamisch den Namen des Modells an -->
                 <span class="badge">{{ miner.model }}</span>
               </div>
               
@@ -89,8 +90,8 @@ import { AddMinerModalComponent } from '../components/add-miner-modal.component'
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
                 </button>
 
-                <!-- Einstellungen Button -->
-                <button class="btn-action" title="Einstellungen">
+                <!-- Einstellungen/Bearbeiten Button -->
+                <button class="btn-action" title="Einstellungen bearbeiten" (click)="openEditModal(miner)">
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
                 </button>
 
@@ -107,6 +108,13 @@ import { AddMinerModalComponent } from '../components/add-miner-modal.component'
 
     @if (showAddModal) {
       <app-add-miner-modal (close)="closeAddModal()"></app-add-miner-modal>
+    }
+
+    @if (selectedMinerToEdit) {
+      <app-edit-miner-modal 
+        [miner]="selectedMinerToEdit" 
+        (close)="closeEditModal()">
+      </app-edit-miner-modal>
     }
   `,
   styles: [`
@@ -158,10 +166,16 @@ import { AddMinerModalComponent } from '../components/add-miner-modal.component'
 })
 export class MyMinersComponent {
   minerService = inject(MinerService);
+  
   showAddModal = false;
+  selectedMinerToEdit: Miner | null = null;
 
   openAddModal() { this.showAddModal = true; }
   closeAddModal() { this.showAddModal = false; }
+  
+  openEditModal(miner: Miner) { this.selectedMinerToEdit = miner; }
+  closeEditModal() { this.selectedMinerToEdit = null; }
+
   deleteMiner(id: string) { if (confirm('Möchtest du diesen Miner wirklich entfernen?')) { this.minerService.deleteMiner(id); } }
 
   restart(id: string, name: string) {
