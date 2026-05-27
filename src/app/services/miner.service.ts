@@ -1,4 +1,4 @@
-import { Injectable, signal, effect, computed, inject, isDevMode } from '@angular/core';
+import { Injectable, signal, effect, computed, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { catchError } from 'rxjs/operators';
 import { of, firstValueFrom } from 'rxjs';
@@ -64,13 +64,8 @@ export class MinerService {
 
   private getApiUrl(ip: string, endpoint: string): string {
     const cleanIp = ip.replace(/^https?:\/\//, '');
-    
-    // Nutze den lokalen Angular-Proxy immer dann, wenn wir uns im Entwicklungsmodus befinden
-    if (isDevMode()) {
-      return `/api-proxy/${cleanIp}${endpoint}`;
-    }
-    
-    // Im Live-Betrieb (produktiv) direkt ansprechen
+    // Da wir als statische Seite auf All-Inkl hosten, sprechen wir die IP immer direkt an.
+    // CORS muss vom Miner unterstützt werden (was beim GET klappt, beim PATCH leider nicht).
     return `http://${cleanIp}${endpoint}`;
   }
 
@@ -111,8 +106,6 @@ export class MinerService {
     }
   }
 
-  // --- Lokale Verwaltung ---
-
   addMiner(name: string, ipAddress: string, model: string) {
     const generateId = () => Date.now().toString(36) + Math.random().toString(36).substring(2, 9);
     const newMiner: Miner = {
@@ -141,8 +134,6 @@ export class MinerService {
     this.miners.update(current => current.filter(m => m.id !== id));
   }
 
-  // --- API Steuerung der echten Hardware ---
-
   restartMiner(id: string) {
     const miner = this.miners().find(m => m.id === id);
     if (miner) {
@@ -170,7 +161,6 @@ export class MinerService {
   updateMinerHardwareSettings(ip: string, settings: any) {
     return this.http.patch(this.getApiUrl(ip, '/api/system/info'), settings).pipe(
       catchError((err) => {
-        console.error('Fehler beim Speichern der Hardware-Einstellungen per PATCH', err);
         return of(null);
       })
     );

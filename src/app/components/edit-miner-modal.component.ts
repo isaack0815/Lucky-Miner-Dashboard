@@ -63,8 +63,8 @@ import { firstValueFrom } from 'rxjs';
           } @else if (loadError) {
             <div class="status-box error flex-col">
               <div class="error-text">
-                <strong>Direktabfrage blockiert (CORS / Firmware).</strong><br>
-                Deine Miner-Firmware unterstützt diese API leider nicht direkt. Du kannst die Pool-Einstellungen stattdessen in der Weboberfläche des Miners ändern.
+                <strong>Verbindung blockiert.</strong><br>
+                Dein Miner kann zwar ausgelesen werden, erlaubt aber keine direkten Änderungen über dieses externe Dashboard.
               </div>
               <a [href]="'http://' + miner.ipAddress" target="_blank" class="btn-external">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
@@ -72,6 +72,11 @@ import { firstValueFrom } from 'rxjs';
               </a>
             </div>
           } @else {
+            <div class="status-box info">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+              <span>Die Pool-Einstellungen deines Miners. Wegen Browser-Sicherheitsrichtlinien (CORS) kann das Speichern vom Miner blockiert werden.</span>
+            </div>
+
             <div class="form-group">
               <label for="poolUrl">Pool URL</label>
               <input type="text" id="poolUrl" formControlName="poolUrl" class="form-input" placeholder="z.B. eu.luckyminer.io">
@@ -98,7 +103,7 @@ import { firstValueFrom } from 'rxjs';
           <div class="modal-footer">
             <button type="button" class="btn-secondary" (click)="close.emit()">Abbrechen</button>
             <button type="submit" class="btn-primary" [disabled]="editForm.invalid || isSaving">
-              {{ isSaving ? 'Speichert...' : 'Lokale Änderungen speichern' }}
+              {{ isSaving ? 'Speichert...' : 'Speichern' }}
             </button>
           </div>
         </form>
@@ -142,6 +147,7 @@ import { firstValueFrom } from 'rxjs';
     .status-box { padding: 1rem; border-radius: var(--radius-md); font-size: 0.875rem; display: flex; align-items: center; gap: 10px; margin-bottom: 1.25rem; }
     .status-box.loading { background-color: var(--bg-main); color: var(--text-muted); }
     .status-box.error { background-color: #FEE2E2; color: #991B1B; border: 1px solid #FCA5A5; }
+    .status-box.info { background-color: var(--bg-main); color: var(--text-muted); line-height: 1.5; align-items: flex-start; }
     .flex-col { flex-direction: column; align-items: flex-start; gap: 1rem; }
     .error-text { line-height: 1.5; }
     
@@ -202,7 +208,6 @@ export class EditMinerModalComponent implements OnInit {
       const settings = await firstValueFrom(this.minerService.getMinerHardwareSettings(this.miner.ipAddress));
       
       if (settings) {
-        // Formular mit den echten Werten vom Miner befüllen
         this.editForm.patchValue({
           poolUrl: settings.stratumURL || '',
           poolPort: settings.stratumPort || '',
@@ -230,7 +235,7 @@ export class EditMinerModalComponent implements OnInit {
         : formValue.model;
       this.minerService.updateMiner(this.miner.id, formValue.name, formValue.ipAddress, finalModel);
 
-      // 2. Hardware-Einstellungen an den ESP-Miner senden (nur wenn sie erfolgreich geladen wurden)
+      // 2. Hardware-Einstellungen an den ESP senden (wird oft durch CORS blockiert)
       if (!this.loadError && !this.isLoadingPool) {
         const hardwarePayload = {
           stratumURL: formValue.poolUrl,
@@ -241,8 +246,11 @@ export class EditMinerModalComponent implements OnInit {
 
         const result = await firstValueFrom(this.minerService.updateMinerHardwareSettings(formValue.ipAddress, hardwarePayload));
         
-        if (result !== null) {
-          alert('Pool-Einstellungen wurden erfolgreich auf dem Miner gespeichert!');
+        if (result === null) {
+          // Zeigt eine klare Fehlermeldung, wenn der Miner die CORS Anfrage abblockt
+          alert('Lokale Daten (Name/IP) wurden gespeichert!\n\nDas Ändern des Pools wurde jedoch vom Miner blockiert (Browser-Sicherheitsrichtlinie/CORS).\nBitte nutze das Miner-eigene Webinterface, um den Pool zu wechseln.');
+        } else {
+          alert('Einstellungen erfolgreich gespeichert!');
         }
       }
 
