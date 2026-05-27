@@ -12,7 +12,7 @@ import { AddMinerModalComponent } from '../components/add-miner-modal.component'
       <div class="dashboard-header">
         <div>
           <h1 class="page-title">Übersicht</h1>
-          <p class="page-subtitle">Willkommen zurück! Hier ist der Status deiner Miner.</p>
+          <p class="page-subtitle">Echtzeit-Daten deiner ESP-Miner basierten LuckyMiner.</p>
         </div>
         <button class="btn-primary" (click)="openAddModal()">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
@@ -23,24 +23,20 @@ import { AddMinerModalComponent } from '../components/add-miner-modal.component'
       <!-- Stats Grid -->
       <div class="stats-grid">
         
-        <!-- Stat Card 1 -->
+        <!-- Total Hashrate -->
         <div class="stat-card">
           <div class="stat-header">
             <div class="stat-icon bg-indigo">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>
             </div>
-            <span class="trend positive">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline><polyline points="17 6 23 6 23 12"></polyline></svg>
-              +0.0%
-            </span>
           </div>
           <div class="stat-content">
-            <h3 class="stat-value">0.0 TH/s</h3>
+            <h3 class="stat-value">{{ minerService.totalHashrate().toFixed(2) }} TH/s</h3>
             <p class="stat-label">Gesamte Hashrate</p>
           </div>
         </div>
 
-        <!-- Stat Card 2 (Dynamisch) -->
+        <!-- Online Status -->
         <div class="stat-card">
           <div class="stat-header">
             <div class="stat-icon bg-emerald">
@@ -51,12 +47,12 @@ import { AddMinerModalComponent } from '../components/add-miner-modal.component'
             </span>
           </div>
           <div class="stat-content">
-            <h3 class="stat-value">{{ minerService.totalMiners() }} Gesamt</h3>
-            <p class="stat-label">Registrierte Miner</p>
+            <h3 class="stat-value">{{ minerService.onlineMiners() }} Online</h3>
+            <p class="stat-label">Aktive Miner</p>
           </div>
         </div>
 
-        <!-- Stat Card 3 -->
+        <!-- Total Shares -->
         <div class="stat-card">
           <div class="stat-header">
             <div class="stat-icon bg-amber">
@@ -64,24 +60,20 @@ import { AddMinerModalComponent } from '../components/add-miner-modal.component'
             </div>
           </div>
           <div class="stat-content">
-            <h3 class="stat-value">0</h3>
-            <p class="stat-label">Gefundene Shares (24h)</p>
+            <h3 class="stat-value">{{ minerService.totalShares() }}</h3>
+            <p class="stat-label">Gefundene Shares</p>
           </div>
         </div>
 
-        <!-- Stat Card 4 -->
+        <!-- Average Temp -->
         <div class="stat-card">
           <div class="stat-header">
             <div class="stat-icon bg-danger">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 14.76V3.5a2.5 2.5 0 0 0-5 0v11.26a4.5 4.5 0 1 0 5 0z"></path></svg>
             </div>
-            <span class="trend neutral">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line></svg>
-              0.0°C
-            </span>
           </div>
           <div class="stat-content">
-            <h3 class="stat-value">0 °C</h3>
+            <h3 class="stat-value">{{ minerService.avgTemp() }} °C</h3>
             <p class="stat-label">Durchschnittliche Temp.</p>
           </div>
         </div>
@@ -99,7 +91,7 @@ import { AddMinerModalComponent } from '../components/add-miner-modal.component'
                 <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect><line x1="8" y1="21" x2="16" y2="21"></line><line x1="12" y1="17" x2="12" y2="21"></line></svg>
               </div>
               <h3>Keine Miner vorhanden</h3>
-              <p>Füge deinen ersten Miner hinzu, um Statistiken zu sammeln.</p>
+              <p>Füge deinen ersten Miner hinzu, um Live-Daten abzurufen.</p>
               <button class="btn-primary mt-4" (click)="openAddModal()">Miner hinzufügen</button>
             </div>
           } @else {
@@ -110,7 +102,7 @@ import { AddMinerModalComponent } from '../components/add-miner-modal.component'
                     <div class="status-indicator" [class.offline]="miner.status === 'offline'"></div>
                     <div>
                       <h4 class="miner-name">{{ miner.name }}</h4>
-                      <p class="miner-ip">{{ miner.ipAddress }} • {{ miner.model }}</p>
+                      <p class="miner-ip">{{ miner.ipAddress }} • {{ miner.hashrate.toFixed(2) }} TH/s</p>
                     </div>
                   </div>
                   <div class="miner-actions">
@@ -125,277 +117,68 @@ import { AddMinerModalComponent } from '../components/add-miner-modal.component'
         </div>
         
         <div class="widget-card">
-          <h2 class="widget-title">Letzte Aktivitäten</h2>
+          <h2 class="widget-title">Status Logging</h2>
           <div class="activity-list">
             <div class="text-muted" style="text-align: center; padding: 2rem 0;">
-              Noch keine Aktivitäten aufgezeichnet.
+              System-Abfragen aktiv.<br>Warte auf Miner-Daten...
             </div>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- Modal Component -->
     @if (showAddModal) {
       <app-add-miner-modal (close)="closeAddModal()"></app-add-miner-modal>
     }
   `,
-  styles: [`
-    .dashboard-container {
-      padding: 0 2rem 2rem 2rem;
-      max-width: 1400px;
-      margin: 0 auto;
-    }
-
-    .dashboard-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-end;
-      margin-bottom: 2rem;
-    }
-
-    .page-title {
-      font-size: 2rem;
-      margin-bottom: 0.5rem;
-    }
-
-    .page-subtitle {
-      color: var(--text-muted);
-      font-size: 1rem;
-    }
-
-    .btn-primary {
-      background-color: var(--primary);
-      color: white;
-      border: none;
-      padding: 0.75rem 1.5rem;
-      border-radius: var(--radius-full);
-      font-weight: 600;
-      font-family: inherit;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-      cursor: pointer;
-      transition: background-color 0.2s;
-      box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);
-    }
-
+  styles: [ /* (Styles bleiben unverändert, um Platz zu sparen - ich belasse sie der Vollständigkeit halber aber drin, damit das Template nicht bricht) */`
+    .dashboard-container { padding: 0 2rem 2rem 2rem; max-width: 1400px; margin: 0 auto; }
+    .dashboard-header { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 2rem; }
+    .page-title { font-size: 2rem; margin-bottom: 0.5rem; }
+    .page-subtitle { color: var(--text-muted); font-size: 1rem; }
+    .btn-primary { background-color: var(--primary); color: white; border: none; padding: 0.75rem 1.5rem; border-radius: var(--radius-full); font-weight: 600; font-family: inherit; display: flex; align-items: center; justify-content: center; gap: 8px; cursor: pointer; transition: background-color 0.2s; box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3); }
     .mt-4 { margin-top: 1rem; }
-
-    .btn-primary:hover {
-      background-color: var(--primary-hover);
-    }
-
-    .stats-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-      gap: 1.5rem;
-      margin-bottom: 2rem;
-    }
-
-    .stat-card {
-      background: var(--bg-surface);
-      border-radius: var(--radius-lg);
-      padding: 1.5rem;
-      box-shadow: var(--shadow-sm);
-    }
-
-    .stat-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-start;
-      margin-bottom: 1.5rem;
-    }
-
-    .stat-icon {
-      width: 48px;
-      height: 48px;
-      border-radius: var(--radius-md);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-
+    .btn-primary:hover { background-color: var(--primary-hover); }
+    .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1.5rem; margin-bottom: 2rem; }
+    .stat-card { background: var(--bg-surface); border-radius: var(--radius-lg); padding: 1.5rem; box-shadow: var(--shadow-sm); }
+    .stat-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1.5rem; }
+    .stat-icon { width: 48px; height: 48px; border-radius: var(--radius-md); display: flex; align-items: center; justify-content: center; }
     .bg-indigo { background: #E0E7FF; color: #4F46E5; }
     .bg-emerald { background: #D1FAE5; color: #10B981; }
     .bg-amber { background: #FEF3C7; color: #F59E0B; }
     .bg-danger { background: #FEE2E2; color: #EF4444; }
-
-    .trend {
-      display: flex;
-      align-items: center;
-      gap: 4px;
-      font-size: 0.875rem;
-      font-weight: 600;
-      padding: 4px 8px;
-      border-radius: var(--radius-full);
-    }
-
+    .trend { display: flex; align-items: center; gap: 4px; font-size: 0.875rem; font-weight: 600; padding: 4px 8px; border-radius: var(--radius-full); }
     .trend.positive { background: var(--success-light); color: #065F46; }
     .trend.negative { background: #FEE2E2; color: #991B1B; }
     .trend.neutral { background: var(--bg-main); color: var(--text-muted); }
-
-    .stat-value {
-      font-size: 1.75rem;
-      margin-bottom: 0.25rem;
-    }
-
-    .stat-label {
-      color: var(--text-muted);
-      font-size: 0.875rem;
-      font-weight: 500;
-    }
-
-    .dashboard-widgets {
-      display: grid;
-      grid-template-columns: 2fr 1fr;
-      gap: 1.5rem;
-    }
-
-    @media (max-width: 1024px) {
-      .dashboard-widgets {
-        grid-template-columns: 1fr;
-      }
-    }
-
-    .widget-card {
-      background: var(--bg-surface);
-      border-radius: var(--radius-lg);
-      padding: 1.5rem;
-      box-shadow: var(--shadow-sm);
-      display: flex;
-      flex-direction: column;
-    }
-
-    .widget-title {
-      font-size: 1.25rem;
-      margin-bottom: 1.5rem;
-    }
-
-    .empty-state {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      padding: 3rem 1rem;
-      text-align: center;
-      background: var(--bg-main);
-      border-radius: var(--radius-md);
-      border: 2px dashed #E5E7EB;
-      flex-grow: 1;
-    }
-
-    .empty-icon {
-      width: 64px;
-      height: 64px;
-      background: white;
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: var(--text-muted);
-      margin-bottom: 1rem;
-      box-shadow: var(--shadow-sm);
-    }
-
-    .empty-state h3 {
-      margin-bottom: 0.5rem;
-    }
-
-    .empty-state p {
-      color: var(--text-muted);
-    }
-
-    .miner-list {
-      display: flex;
-      flex-direction: column;
-      gap: 1rem;
-    }
-
-    .miner-item {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 1rem;
-      background-color: var(--bg-main);
-      border-radius: var(--radius-md);
-      transition: transform 0.2s;
-    }
-
-    .miner-item:hover {
-      transform: translateY(-2px);
-      box-shadow: var(--shadow-sm);
-    }
-
-    .miner-info {
-      display: flex;
-      align-items: center;
-      gap: 1rem;
-    }
-
-    .status-indicator {
-      width: 12px;
-      height: 12px;
-      border-radius: 50%;
-      background-color: var(--success);
-      box-shadow: 0 0 0 3px var(--success-light);
-    }
-
-    .status-indicator.offline {
-      background-color: var(--text-muted);
-      box-shadow: 0 0 0 3px #E5E7EB;
-    }
-
-    .miner-name {
-      font-weight: 600;
-      font-size: 1rem;
-      margin-bottom: 0.25rem;
-    }
-
-    .miner-ip {
-      font-size: 0.875rem;
-      color: var(--text-muted);
-    }
-
-    .btn-icon {
-      background: none;
-      border: none;
-      color: var(--text-muted);
-      cursor: pointer;
-      padding: 8px;
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      transition: all 0.2s;
-    }
-
-    .btn-icon:hover {
-      background-color: #FEE2E2;
-      color: var(--danger);
-    }
-
-    .text-muted {
-      color: var(--text-muted);
-    }
+    .stat-value { font-size: 1.75rem; margin-bottom: 0.25rem; }
+    .stat-label { color: var(--text-muted); font-size: 0.875rem; font-weight: 500; }
+    .dashboard-widgets { display: grid; grid-template-columns: 2fr 1fr; gap: 1.5rem; }
+    @media (max-width: 1024px) { .dashboard-widgets { grid-template-columns: 1fr; } }
+    .widget-card { background: var(--bg-surface); border-radius: var(--radius-lg); padding: 1.5rem; box-shadow: var(--shadow-sm); display: flex; flex-direction: column; }
+    .widget-title { font-size: 1.25rem; margin-bottom: 1.5rem; }
+    .empty-state { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 3rem 1rem; text-align: center; background: var(--bg-main); border-radius: var(--radius-md); border: 2px dashed #E5E7EB; flex-grow: 1; }
+    .empty-icon { width: 64px; height: 64px; background: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: var(--text-muted); margin-bottom: 1rem; box-shadow: var(--shadow-sm); }
+    .empty-state h3 { margin-bottom: 0.5rem; }
+    .empty-state p { color: var(--text-muted); }
+    .miner-list { display: flex; flex-direction: column; gap: 1rem; }
+    .miner-item { display: flex; justify-content: space-between; align-items: center; padding: 1rem; background-color: var(--bg-main); border-radius: var(--radius-md); transition: transform 0.2s; }
+    .miner-item:hover { transform: translateY(-2px); box-shadow: var(--shadow-sm); }
+    .miner-info { display: flex; align-items: center; gap: 1rem; }
+    .status-indicator { width: 12px; height: 12px; border-radius: 50%; background-color: var(--success); box-shadow: 0 0 0 3px var(--success-light); }
+    .status-indicator.offline { background-color: var(--text-muted); box-shadow: 0 0 0 3px #E5E7EB; }
+    .miner-name { font-weight: 600; font-size: 1rem; margin-bottom: 0.25rem; }
+    .miner-ip { font-size: 0.875rem; color: var(--text-muted); }
+    .btn-icon { background: none; border: none; color: var(--text-muted); cursor: pointer; padding: 8px; border-radius: 50%; display: flex; align-items: center; justify-content: center; transition: all 0.2s; }
+    .btn-icon:hover { background-color: #FEE2E2; color: var(--danger); }
+    .text-muted { color: var(--text-muted); }
   `]
 })
 export class DashboardComponent {
   minerService = inject(MinerService);
   showAddModal = false;
 
-  openAddModal() {
-    this.showAddModal = true;
-  }
-
-  closeAddModal() {
-    this.showAddModal = false;
-  }
-
-  deleteMiner(id: string) {
-    if (confirm('Möchtest du diesen Miner wirklich entfernen?')) {
-      this.minerService.deleteMiner(id);
-    }
-  }
+  openAddModal() { this.showAddModal = true; }
+  closeAddModal() { this.showAddModal = false; }
+  deleteMiner(id: string) { if (confirm('Möchtest du diesen Miner wirklich entfernen?')) { this.minerService.deleteMiner(id); } }
 }
