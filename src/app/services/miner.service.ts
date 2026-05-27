@@ -104,6 +104,8 @@ export class MinerService {
     }
   }
 
+  // --- Lokale Verwaltung ---
+
   addMiner(name: string, ipAddress: string, model: string) {
     const generateId = () => Date.now().toString(36) + Math.random().toString(36).substring(2, 9);
     const newMiner: Miner = {
@@ -121,17 +123,18 @@ export class MinerService {
     this.refreshAll();
   }
 
-  // NEU: Funktion zum Bearbeiten eines Miners
   updateMiner(id: string, name: string, ipAddress: string, model: string) {
     this.miners.update(current => current.map(m => 
       m.id === id ? { ...m, name, ipAddress, model } : m
     ));
-    this.refreshAll(); // Daten nach dem Update direkt neu laden
+    this.refreshAll(); 
   }
 
   deleteMiner(id: string) {
     this.miners.update(current => current.filter(m => m.id !== id));
   }
+
+  // --- API Steuerung der echten Hardware ---
 
   restartMiner(id: string) {
     const miner = this.miners().find(m => m.id === id);
@@ -149,5 +152,22 @@ export class MinerService {
         error: () => console.error(`Fehler beim Identifizieren von ${miner.name}`)
       });
     }
+  }
+
+  // NEU: Ruft die aktuellen Hardware-Einstellungen ab
+  getMinerHardwareSettings(ip: string) {
+    return this.http.get<any>(this.getApiUrl(ip, '/api/settings')).pipe(
+      catchError(() => of(null))
+    );
+  }
+
+  // NEU: Speichert neue Pool-Einstellungen auf der Hardware
+  updateMinerHardwareSettings(ip: string, settings: any) {
+    return this.http.post(this.getApiUrl(ip, '/api/settings'), settings).pipe(
+      catchError((err) => {
+        console.error('Fehler beim Speichern der Hardware-Einstellungen', err);
+        return of(null);
+      })
+    );
   }
 }
