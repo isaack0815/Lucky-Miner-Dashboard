@@ -62,6 +62,15 @@ import { Miner } from '../models/miner.model';
                     {{ miner.status === 'offline' ? 'Offline' : 'Online' }}
                   </span>
                 </div>
+                
+                <!-- Pool Anzeige -->
+                @if (miner.pool) {
+                  <div class="detail-row">
+                    <span class="detail-label">Pool</span>
+                    <span class="detail-value truncate" [title]="miner.pool">{{ miner.pool }}</span>
+                  </div>
+                }
+
                 <div class="divider"></div>
                 <div class="stats-row">
                   <div class="stat-mini">
@@ -145,9 +154,10 @@ import { Miner } from '../models/miner.model';
     .miner-name { font-size: 1.25rem; font-weight: 700; }
     .badge { background-color: var(--primary-light); color: var(--primary); padding: 4px 10px; border-radius: var(--radius-full); font-size: 0.75rem; font-weight: 700; letter-spacing: 0.5px; text-transform: uppercase; }
     .miner-details { flex-grow: 1; display: flex; flex-direction: column; gap: 0.75rem; }
-    .detail-row { display: flex; justify-content: space-between; align-items: center; }
-    .detail-label { color: var(--text-muted); font-size: 0.875rem; }
+    .detail-row { display: flex; justify-content: space-between; align-items: center; gap: 1rem; }
+    .detail-label { color: var(--text-muted); font-size: 0.875rem; white-space: nowrap; }
     .detail-value { font-weight: 600; font-size: 0.95rem; }
+    .detail-value.truncate { max-width: 65%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-align: right; }
     .font-mono { font-family: monospace; background: var(--bg-main); padding: 2px 6px; border-radius: 4px; }
     .text-muted { color: var(--text-muted); }
     .text-success { color: var(--success); }
