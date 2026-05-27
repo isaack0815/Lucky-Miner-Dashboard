@@ -1,5 +1,5 @@
 import { Injectable, signal, effect, computed, inject } from '@angular/core';
-import { HttpClient, HttpParams } from '@angular/common/http';
+import { HttpClient } from '@angular/common/http';
 import { catchError } from 'rxjs/operators';
 import { of, firstValueFrom } from 'rxjs';
 import { Miner } from '../models/miner.model';
@@ -64,6 +64,14 @@ export class MinerService {
 
   private getApiUrl(ip: string, endpoint: string): string {
     const cleanIp = ip.replace(/^https?:\/\//, '');
+    
+    // Nutze den lokalen Proxy, wenn das Dashboard über localhost aufgerufen wird.
+    // Das umgeht die CORS-Preflight (OPTIONS) Blockade des Browsers bei PATCH-Requests!
+    if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+      return `/api-proxy/${cleanIp}${endpoint}`;
+    }
+    
+    // Auf einem Live-Server direkt ansprechen
     return `http://${cleanIp}${endpoint}`;
   }
 
@@ -154,29 +162,17 @@ export class MinerService {
     }
   }
 
-  // Ruft die aktuellen Hardware-Einstellungen ab (aus der info-API)
   getMinerHardwareSettings(ip: string) {
     return this.http.get<any>(this.getApiUrl(ip, '/api/system/info')).pipe(
       catchError(() => of(null))
     );
   }
 
-  // Speichert neue Pool-Einstellungen auf der Hardware per einfachem Formular-POST
+  // Sendet sauberes JSON per PATCH. Lokal über den Proxy, live direkt.
   updateMinerHardwareSettings(ip: string, settings: any) {
-    // HttpParams codiert die Daten als "application/x-www-form-urlencoded"
-    const body = new HttpParams()
-      .set('stratumURL', settings.stratumURL)
-      .set('stratumPort', settings.stratumPort.toString())
-      .set('stratumUser', settings.stratumUser)
-      .set('stratumPassword', settings.stratumPassword);
-
-    return this.http.post(this.getApiUrl(ip, '/api/system/info'), body.toString(), {
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded'
-      }
-    }).pipe(
+    return this.http.patch(this.getApiUrl(ip, '/api/system/info'), settings).pipe(
       catchError((err) => {
-        console.error('Fehler beim Speichern der Hardware-Einstellungen', err);
+        console.error('Fehler beim Speichern der Hardware-Einstellungen per PATCH', err);
         return of(null);
       })
     );
