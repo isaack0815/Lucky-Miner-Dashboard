@@ -32,6 +32,11 @@ export class MinerService {
     this.miners().reduce((acc, m) => acc + (m.status === 'online' ? m.shares : 0), 0)
   );
 
+  // Neuer abgeleiteter Wert: Gesamtstromverbrauch in Watt
+  totalPower = computed(() => 
+    this.miners().reduce((acc, m) => acc + (m.status === 'online' ? (m.power || 0) : 0), 0)
+  );
+
   constructor() {
     effect(() => {
       localStorage.setItem(this.STORAGE_KEY, JSON.stringify(this.miners()));
@@ -48,16 +53,11 @@ export class MinerService {
     }
   }
 
-  // --- API Hilfsfunktion für CORS / Proxy ---
   private getApiUrl(ip: string, endpoint: string): string {
-    // Da der Miner CORS erlaubt (Access-Control-Allow-Origin: *), 
-    // können wir direkt anpingen, wenn wir lokal HTTP nutzen!
     const USE_LOCAL_PROXY = false;
-
     if (USE_LOCAL_PROXY) {
       return `/api-proxy/${ip}${endpoint}`;
     } else {
-      // Wenn die IP schon ein http:// enthält, nicht doppelt anhängen
       const cleanIp = ip.replace(/^https?:\/\//, '');
       return `http://${cleanIp}${endpoint}`;
     }
@@ -65,14 +65,13 @@ export class MinerService {
 
   private startPolling() {
     this.refreshAll();
-    setInterval(() => this.refreshAll(), 10000); // Alle 10 Sekunden updaten
+    setInterval(() => this.refreshAll(), 10000);
   }
 
   async refreshAll() {
     const currentMiners = this.miners();
     for (const miner of currentMiners) {
       try {
-        // Neuer Endpunkt: /api/system/info
         const stats = await firstValueFrom(
           this.http.get<any>(this.getApiUrl(miner.ipAddress, '/api/system/info')).pipe(
             catchError(() => of(null))
@@ -80,14 +79,17 @@ export class MinerService {
         );
 
         if (stats) {
-          // Werte aus dem JSON der neuen Firmware auslesen
           this.miners.update(ms => ms.map(m => m.id === miner.id ? {
             ...m,
             status: 'online',
-            // Hashrate kommt als z.B. 1429.59 (vermutlich GH/s), also / 1000 für TH/s
             hashrate: (stats.hashRate || 0) / 1000, 
             temp: stats.temp || 0,
-            shares: stats.sharesAccepted || 0
+            shares: stats.sharesAccepted || 0,
+            bestDiff: stats.bestDiff,
+            uptimeSeconds: stats.uptimeSeconds,
+            fanSpeed: stats.fanSpeed,
+            power: stats.power,
+            pool: stats.stratumURL
           } : m));
         } else {
           this.miners.update(ms => ms.map(m => m.id === miner.id ? {...m, status: 'offline'} : m));

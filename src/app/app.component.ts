@@ -3,12 +3,13 @@ import { SidebarComponent } from './components/sidebar.component';
 import { HeaderComponent } from './components/header.component';
 import { DashboardComponent } from './pages/dashboard.component';
 import { MyMinersComponent } from './pages/my-miners.component';
+import { StatsComponent } from './pages/stats.component';
 import { NavigationService } from './services/navigation.service';
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [SidebarComponent, HeaderComponent, DashboardComponent, MyMinersComponent],
+  imports: [SidebarComponent, HeaderComponent, DashboardComponent, MyMinersComponent, StatsComponent],
   template: `
     <div class="app-layout">
       <app-sidebar></app-sidebar>
@@ -21,6 +22,9 @@ import { NavigationService } from './services/navigation.service';
             }
             @case ('miners') {
               <app-my-miners></app-my-miners>
+            }
+            @case ('stats') {
+              <app-stats></app-stats>
             }
             @default {
               <div style="padding: 2rem; text-align: center; color: var(--text-muted);">
