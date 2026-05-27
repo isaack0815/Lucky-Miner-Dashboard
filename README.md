@@ -1,65 +1,101 @@
-# Dyad Angular Template
+# ⛏️ LuckyMiner Dashboard
 
-A minimal Angular template for Dyad.sh - a clean starting point for building Angular applications.
+Ein modernes, leichtgewichtiges und webbasiertes Dashboard zur Verwaltung, Überwachung und Steuerung von ESP-basierten **LuckyMinern** (z. B. v06, v07). Entwickelt mit **Angular 17** und TypeScript.
 
-## Overview
+Dieses Dashboard speichert die IP-Adressen deiner Miner lokal in deinem Browser und fragt deren Live-Daten direkt in deinem lokalen Netzwerk ab. So hast du alle deine Miner auf einen Blick, ganz ohne externe Cloud oder Datenbank!
 
-This template provides a minimal, unopinionated Angular application setup that's fully compatible with Dyad.sh's JavaScript-based environment. It includes:
+---
 
-- Latest stable Angular (v17)
-- TypeScript support
-- CSS styling
-- Development server with hot reload
-- Production build configuration
+## ✨ Features
 
-## Development
+- **📊 Übersichtliches Dashboard:** Gesamte Hashrate, Anzahl der aktiven Miner, gefundene Shares und durchschnittliche Temperatur auf einen Blick.
+- **🔍 Miner-Verwaltung:** Miner ganz einfach per IP-Adresse hinzufügen. Mit integrierter Live-Suche nach Name, IP oder Modell.
+- **🛠️ Steuerung & Aktionen:** 
+  - **Neustart:** Einzelne Miner bequem über das Dashboard neu starten.
+  - **Identifizieren:** Lässt das Display des ausgewählten Miners blinken, um ihn im echten Leben schnell zu finden.
+- **📈 Detaillierte Statistiken:** 
+  - Gesamtstromverbrauch (Watt) und Effizienz (W/TH).
+  - Performance-Ranking aller Miner (wer hat die höchste Hashrate?).
+  - Übersicht der aktuell verbundenen Stratum-Pools.
+- **🔒 100% Lokal:** Alle Miner-Daten (IPs, Namen) bleiben bei dir und werden nur im lokalen `localStorage` deines Browsers gespeichert.
 
-To start the development server:
+---
 
-```bash
-npm run dev
-# or
-npm start
-```
+## ⚠️ WICHTIGER HINWEIS (HTTP vs. HTTPS)
 
-The application will be available at `http://localhost:4200/` and will automatically reload when you make changes.
+Wenn du dieses Dashboard auf einem Webspace hosten möchtest, **musst du es über `http://` aufrufen**, NICHT über `https://`!
 
-## Building for Production
+**Warum?** 
+Das Dashboard fragt die Daten direkt von den Minern in deinem lokalen Netzwerk ab (z. B. über `http://192.168.178.50`). Moderne Browser blockieren aus Sicherheitsgründen Anfragen an unsichere `http://`-Ziele, wenn die Webseite selbst über ein sicheres `https://` geladen wurde (sogenannter *Mixed Content Error*). 
 
-To create a production build:
+Um sicherzustellen, dass die Echtzeitdaten geladen werden können, rufe deine gehostete Seite bitte immer per HTTP auf (z. B. `http://deine-domain.de`).
 
-```bash
-npm run build
-```
+---
 
-The build artifacts will be stored in the `dist/` directory, ready for deployment.
+## 🚀 Lokale Installation & Entwicklung
 
-## Project Structure
+Wenn du das Projekt lokal auf deinem Rechner laufen lassen oder weiterentwickeln möchtest:
 
-```
-src/
-├── app/
-│   ├── app.component.ts    # Main component logic
-│   ├── app.component.html  # Main component template
-│   └── app.component.css   # Main component styles
-├── index.html             # Application entry point
-├── main.ts               # Application bootstrap
-└── styles.css            # Global styles
-```
+### Voraussetzungen
+- Node.js (Version 18 oder 20 empfohlen)
+- NPM (wird mit Node.js installiert)
 
-## Getting Started
+### Schritte
+1. Repository klonen:
+   ```bash
+   git clone https://github.com/DEIN-USERNAME/luckyminer-dashboard.git
+   cd luckyminer-dashboard
+   ```
 
-1. Edit `src/app/app.component.ts` to add your component logic
-2. Modify `src/app/app.component.html` for your template
-3. Update `src/app/app.component.css` for component-specific styles
-4. Add global styles in `src/styles.css`
+2. Abhängigkeiten installieren:
+   ```bash
+   npm install
+   ```
 
-## Technologies
+3. Entwicklungsserver starten:
+   ```bash
+   npm start
+   ```
 
-- Angular 17
-- TypeScript
-- CSS
+Das Dashboard ist nun unter `http://localhost:4200` erreichbar. Sobald du Code änderst, lädt die Seite automatisch neu.
 
-## License
+---
 
-This template is open source and available for use in your Dyad.sh projects.
+## 🌐 Automatisches Deployment (z. B. All-Inkl)
+
+Dieses Repository enthält einen fertigen **GitHub Actions Workflow** (`.github/workflows/ftp-deploy.yml`), der das Dashboard bei jedem Push in den `main`-Branch automatisch baut und per FTP auf deinen Webspace lädt.
+
+Um das automatische Deployment zu aktivieren, musst du in deinem GitHub-Repository folgende **Secrets** anlegen:
+
+1. Gehe zu **Settings** -> **Secrets and variables** -> **Actions**
+2. Klicke auf **New repository secret** und füge diese drei Variablen hinzu:
+   - `FTP_SERVER`: Dein FTP-Server (z.B. `deine-domain.de` oder `w0123456.kasserver.com`)
+   - `FTP_USERNAME`: Dein FTP-Benutzername
+   - `FTP_PASSWORD`: Dein FTP-Passwort
+
+*(Hinweis: Wenn du die Dateien in einen bestimmten Unterordner laden möchtest, kannst du die Variable `server-dir:` in der Datei `.github/workflows/ftp-deploy.yml` anpassen).*
+
+---
+
+## 🛠️ Architektur & Technologien
+
+- **Framework:** Angular 17 (Standalone Components, Signals für Reactivity)
+- **Styling:** Reines CSS (mit CSS-Variablen für ein leichtes, modernes Theme)
+- **Kommunikation:** Regelmäßiges Polling der `/api/system/info` Endpunkte auf den lokalen IPs der Miner.
+
+---
+
+## 🤝 Mitwirken (Contributing)
+
+Du möchtest das Dashboard verbessern? Großartig! 
+1. Forke das Projekt
+2. Erstelle einen Feature-Branch (`git checkout -b feature/MeineNeueFunktion`)
+3. Committe deine Änderungen (`git commit -m 'Meine neue Funktion hinzugefügt'`)
+4. Pushe in den Branch (`git push origin feature/MeineNeueFunktion`)
+5. Erstelle einen Pull Request
+
+---
+
+## 📄 Lizenz
+
+Dieses Projekt ist Open Source. Du kannst es frei verwenden, verändern und weiterverbreiten. Viel Spaß beim Minen!
