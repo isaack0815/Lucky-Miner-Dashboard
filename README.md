@@ -6,6 +6,16 @@ Dieses Dashboard speichert die IP-Adressen deiner Miner lokal in deinem Browser 
 
 ---
 
+## 🌍 Direkt nutzen (Live-Version)
+
+Du möchtest nichts installieren oder selbst hosten? Du kannst das fertige Dashboard direkt hier in deinem Browser nutzen:
+
+👉 **[http://miner.vms1-scripte.de](http://miner.vms1-scripte.de)**
+
+**Ist das sicher?** Ja! Da diese Web-App vollständig clientseitig (in deinem Browser) läuft, werden deine eingetragenen Miner-IPs und Namen **niemals** an den Server gesendet. Alles bleibt ausschließlich in deinem lokalen Netzwerk und wird nur im `localStorage` deines aktuellen Geräts gespeichert.
+
+---
+
 ## ✨ Features
 
 - **📊 Übersichtliches Dashboard:** Gesamte Hashrate, Anzahl der aktiven Miner, gefundene Shares und durchschnittliche Temperatur auf einen Blick.
@@ -23,7 +33,7 @@ Dieses Dashboard speichert die IP-Adressen deiner Miner lokal in deinem Browser 
 
 ## ⚠️ WICHTIGER HINWEIS (HTTP vs. HTTPS)
 
-Wenn du dieses Dashboard auf einem Webspace hosten möchtest, **musst du es über `http://` aufrufen**, NICHT über `https://`!
+Wenn du dieses Dashboard auf einem eigenen Webspace hosten möchtest, **musst du es über `http://` aufrufen**, NICHT über `https://`!
 
 **Warum?** 
 Das Dashboard fragt die Daten direkt von den Minern in deinem lokalen Netzwerk ab (z. B. über `http://192.168.178.50`). Moderne Browser blockieren aus Sicherheitsgründen Anfragen an unsichere `http://`-Ziele, wenn die Webseite selbst über ein sicheres `https://` geladen wurde (sogenannter *Mixed Content Error*). 
