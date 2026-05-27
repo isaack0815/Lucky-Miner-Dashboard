@@ -1,4 +1,4 @@
-import { Injectable, signal, effect, computed, inject } from '@angular/core';
+import { Injectable, signal, effect, computed, inject, isDevMode } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { catchError } from 'rxjs/operators';
 import { of, firstValueFrom } from 'rxjs';
@@ -65,13 +65,12 @@ export class MinerService {
   private getApiUrl(ip: string, endpoint: string): string {
     const cleanIp = ip.replace(/^https?:\/\//, '');
     
-    // Nutze den lokalen Proxy, wenn das Dashboard über localhost aufgerufen wird.
-    // Das umgeht die CORS-Preflight (OPTIONS) Blockade des Browsers bei PATCH-Requests!
-    if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+    // Nutze den lokalen Angular-Proxy immer dann, wenn wir uns im Entwicklungsmodus befinden
+    if (isDevMode()) {
       return `/api-proxy/${cleanIp}${endpoint}`;
     }
     
-    // Auf einem Live-Server direkt ansprechen
+    // Im Live-Betrieb (produktiv) direkt ansprechen
     return `http://${cleanIp}${endpoint}`;
   }
 
@@ -168,7 +167,6 @@ export class MinerService {
     );
   }
 
-  // Sendet sauberes JSON per PATCH. Lokal über den Proxy, live direkt.
   updateMinerHardwareSettings(ip: string, settings: any) {
     return this.http.patch(this.getApiUrl(ip, '/api/system/info'), settings).pipe(
       catchError((err) => {
