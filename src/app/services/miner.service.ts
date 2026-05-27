@@ -1,5 +1,5 @@
 import { Injectable, signal, effect, computed, inject } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { catchError } from 'rxjs/operators';
 import { of, firstValueFrom } from 'rxjs';
 import { Miner } from '../models/miner.model';
@@ -161,11 +161,22 @@ export class MinerService {
     );
   }
 
-  // Speichert neue Pool-Einstellungen auf der Hardware per PATCH
+  // Speichert neue Pool-Einstellungen auf der Hardware per einfachem Formular-POST
   updateMinerHardwareSettings(ip: string, settings: any) {
-    return this.http.patch(this.getApiUrl(ip, '/api/system/info'), settings).pipe(
+    // HttpParams codiert die Daten als "application/x-www-form-urlencoded"
+    const body = new HttpParams()
+      .set('stratumURL', settings.stratumURL)
+      .set('stratumPort', settings.stratumPort.toString())
+      .set('stratumUser', settings.stratumUser)
+      .set('stratumPassword', settings.stratumPassword);
+
+    return this.http.post(this.getApiUrl(ip, '/api/system/info'), body.toString(), {
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded'
+      }
+    }).pipe(
       catchError((err) => {
-        console.error('Fehler beim Speichern der Hardware-Einstellungen per PATCH', err);
+        console.error('Fehler beim Speichern der Hardware-Einstellungen', err);
         return of(null);
       })
     );
