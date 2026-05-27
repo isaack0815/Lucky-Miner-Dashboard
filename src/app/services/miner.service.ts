@@ -33,12 +33,9 @@ export class MinerService {
   );
 
   constructor() {
-    // LocalStorage Synchronisation
     effect(() => {
       localStorage.setItem(this.STORAGE_KEY, JSON.stringify(this.miners()));
     });
-
-    // Automatisches Abfragen der Miner-Daten starten
     this.startPolling();
   }
 
@@ -51,9 +48,21 @@ export class MinerService {
     }
   }
 
+  // --- API Hilfsfunktion für CORS ---
+  private getApiUrl(ip: string, endpoint: string): string {
+    // Toggle: Setze dies auf true, wenn du das Projekt herunterlädst und lokal ausführst!
+    // In der Dyad.sh Cloud belassen wir es auf false und nutzen die CORS-Extension im Browser.
+    const USE_LOCAL_PROXY = false;
+
+    if (USE_LOCAL_PROXY) {
+      return `/api-proxy/${ip}${endpoint}`;
+    } else {
+      return `http://${ip}${endpoint}`;
+    }
+  }
+
   private startPolling() {
     this.refreshAll();
-    // Alle 10 Sekunden neue Daten abrufen
     setInterval(() => this.refreshAll(), 10000);
   }
 
@@ -62,8 +71,8 @@ export class MinerService {
     for (const miner of currentMiners) {
       try {
         const stats = await firstValueFrom(
-          this.http.get<any>(`http://${miner.ipAddress}/api/system/statistics`).pipe(
-            catchError(() => of(null)) // Bei Netzwerkfehler (Offline) null zurückgeben
+          this.http.get<any>(this.getApiUrl(miner.ipAddress, '/api/system/statistics')).pipe(
+            catchError(() => of(null))
           )
         );
 
@@ -71,7 +80,6 @@ export class MinerService {
           this.miners.update(ms => ms.map(m => m.id === miner.id ? {
             ...m,
             status: 'online',
-            // Annahme: ESP-Miner gibt Hashrate oft in GH/s aus. Wir rechnen in TH/s um (/1000)
             hashrate: (stats.hashrate || 0) / 1000, 
             temp: stats.asicTemp || 0,
             shares: stats.shares || stats.bestShare || 0
@@ -98,7 +106,6 @@ export class MinerService {
       addedAt: new Date().toISOString()
     };
     this.miners.update(current => [...current, newMiner]);
-    // Sofort nach dem Hinzufügen Daten abrufen
     this.refreshAll();
   }
 
@@ -106,12 +113,10 @@ export class MinerService {
     this.miners.update(current => current.filter(m => m.id !== id));
   }
 
-  // --- Aktive Steuerung der API ---
-
   restartMiner(id: string) {
     const miner = this.miners().find(m => m.id === id);
     if (miner) {
-      this.http.post(`http://${miner.ipAddress}/api/system/restart`, {}).subscribe({
+      this.http.post(this.getApiUrl(miner.ipAddress, '/api/system/restart'), {}).subscribe({
         error: () => console.error(`Fehler beim Neustart von ${miner.name}`)
       });
     }
@@ -120,7 +125,7 @@ export class MinerService {
   identifyMiner(id: string) {
     const miner = this.miners().find(m => m.id === id);
     if (miner) {
-      this.http.post(`http://${miner.ipAddress}/api/system/identify`, {}).subscribe({
+      this.http.post(this.getApiUrl(miner.ipAddress, '/api/system/identify'), {}).subscribe({
         error: () => console.error(`Fehler beim Identifizieren von ${miner.name}`)
       });
     }
