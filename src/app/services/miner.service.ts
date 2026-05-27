@@ -116,8 +116,13 @@ export class MinerService {
   }
 
   addMiner(name: string, ipAddress: string, model: string) {
+    // Generiert eine eindeutige ID, die auch auf HTTP-Seiten funktioniert
+    const generateId = () => {
+      return Date.now().toString(36) + Math.random().toString(36).substring(2, 9);
+    };
+
     const newMiner: Miner = {
-      id: crypto.randomUUID(),
+      id: generateId(),
       name,
       ipAddress,
       model,
