@@ -132,7 +132,6 @@ export class MinerService {
     this.miners.update(current => current.filter(m => m.id !== id));
   }
 
-  // Neustart "blind" senden
   restartMiner(id: string) {
     const miner = this.miners().find(m => m.id === id);
     if (miner) {
@@ -143,7 +142,6 @@ export class MinerService {
     }
   }
 
-  // Identify "blind" senden
   identifyMiner(id: string) {
     const miner = this.miners().find(m => m.id === id);
     if (miner) {
@@ -160,16 +158,14 @@ export class MinerService {
     );
   }
 
-  // Trick: Wir nutzen einen Blind-POST mit "no-cors", um die Browser-Sperre zu umgehen.
   async updateMinerHardwareSettings(ip: string, settings: any) {
     try {
-      await fetch(this.getApiUrl(ip, '/api/system/info'), {
-        method: 'POST', // Der Miner nimmt meist auch POST statt PATCH
-        mode: 'no-cors', // Das ist der Zaubertrick! Verhindert die OPTIONS Anfrage.
-        body: JSON.stringify(settings) // Wir senden es ohne extra JSON-Header, damit es als "simpel" durchgeht
+      // KORREKTUR: Der POST-Request muss an /api/configuration gehen!
+      await fetch(this.getApiUrl(ip, '/api/configuration'), {
+        method: 'POST',
+        mode: 'no-cors',
+        body: JSON.stringify(settings)
       });
-      // Wenn wir hier ankommen, hat der Browser es abgeschickt.
-      // Wegen no-cors können wir die Antwort nicht lesen, also gehen wir von Erfolg aus.
       return true;
     } catch (e) {
       console.error('Fetch error:', e);
