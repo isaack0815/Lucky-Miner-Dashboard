@@ -1,19 +1,34 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { SidebarComponent } from './components/sidebar.component';
 import { HeaderComponent } from './components/header.component';
 import { DashboardComponent } from './pages/dashboard.component';
+import { MyMinersComponent } from './pages/my-miners.component';
+import { NavigationService } from './services/navigation.service';
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [SidebarComponent, HeaderComponent, DashboardComponent],
+  imports: [SidebarComponent, HeaderComponent, DashboardComponent, MyMinersComponent],
   template: `
     <div class="app-layout">
       <app-sidebar></app-sidebar>
       <div class="main-wrapper">
         <app-header></app-header>
         <main class="content-area">
-          <app-dashboard></app-dashboard>
+          @switch (nav.currentView()) {
+            @case ('dashboard') {
+              <app-dashboard></app-dashboard>
+            }
+            @case ('miners') {
+              <app-my-miners></app-my-miners>
+            }
+            @default {
+              <div style="padding: 2rem; text-align: center; color: var(--text-muted);">
+                <h2>Seite im Aufbau</h2>
+                <p>Dieser Bereich wird demnächst verfügbar sein.</p>
+              </div>
+            }
+          }
         </main>
       </div>
     </div>
@@ -55,4 +70,5 @@ import { DashboardComponent } from './pages/dashboard.component';
 })
 export class AppComponent {
   title = 'LuckyMiner Dashboard';
+  nav = inject(NavigationService);
 }
