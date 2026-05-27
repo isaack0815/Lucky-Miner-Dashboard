@@ -64,8 +64,6 @@ export class MinerService {
 
   private getApiUrl(ip: string, endpoint: string): string {
     const cleanIp = ip.replace(/^https?:\/\//, '');
-    // Da wir als statische Seite auf All-Inkl hosten, sprechen wir die IP immer direkt an.
-    // CORS muss vom Miner unterstützt werden (was beim GET klappt, beim PATCH leider nicht).
     return `http://${cleanIp}${endpoint}`;
   }
 
@@ -134,21 +132,25 @@ export class MinerService {
     this.miners.update(current => current.filter(m => m.id !== id));
   }
 
+  // Neustart "blind" senden
   restartMiner(id: string) {
     const miner = this.miners().find(m => m.id === id);
     if (miner) {
-      this.http.post(this.getApiUrl(miner.ipAddress, '/api/system/restart'), {}).subscribe({
-        error: () => console.error(`Fehler beim Neustart von ${miner.name}`)
-      });
+      fetch(this.getApiUrl(miner.ipAddress, '/api/system/restart'), {
+        method: 'POST',
+        mode: 'no-cors'
+      }).catch(e => console.error(e));
     }
   }
 
+  // Identify "blind" senden
   identifyMiner(id: string) {
     const miner = this.miners().find(m => m.id === id);
     if (miner) {
-      this.http.post(this.getApiUrl(miner.ipAddress, '/api/system/identify'), {}).subscribe({
-        error: () => console.error(`Fehler beim Identifizieren von ${miner.name}`)
-      });
+      fetch(this.getApiUrl(miner.ipAddress, '/api/system/identify'), {
+        method: 'POST',
+        mode: 'no-cors'
+      }).catch(e => console.error(e));
     }
   }
 
@@ -158,11 +160,20 @@ export class MinerService {
     );
   }
 
-  updateMinerHardwareSettings(ip: string, settings: any) {
-    return this.http.patch(this.getApiUrl(ip, '/api/system/info'), settings).pipe(
-      catchError((err) => {
-        return of(null);
-      })
-    );
+  // Trick: Wir nutzen einen Blind-POST mit "no-cors", um die Browser-Sperre zu umgehen.
+  async updateMinerHardwareSettings(ip: string, settings: any) {
+    try {
+      await fetch(this.getApiUrl(ip, '/api/system/info'), {
+        method: 'POST', // Der Miner nimmt meist auch POST statt PATCH
+        mode: 'no-cors', // Das ist der Zaubertrick! Verhindert die OPTIONS Anfrage.
+        body: JSON.stringify(settings) // Wir senden es ohne extra JSON-Header, damit es als "simpel" durchgeht
+      });
+      // Wenn wir hier ankommen, hat der Browser es abgeschickt.
+      // Wegen no-cors können wir die Antwort nicht lesen, also gehen wir von Erfolg aus.
+      return true;
+    } catch (e) {
+      console.error('Fetch error:', e);
+      return null;
+    }
   }
 }

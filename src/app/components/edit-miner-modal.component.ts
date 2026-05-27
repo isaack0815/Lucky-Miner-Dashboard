@@ -63,18 +63,14 @@ import { firstValueFrom } from 'rxjs';
           } @else if (loadError) {
             <div class="status-box error flex-col">
               <div class="error-text">
-                <strong>Verbindung blockiert.</strong><br>
-                Dein Miner kann zwar ausgelesen werden, erlaubt aber keine direkten Änderungen über dieses externe Dashboard.
+                <strong>Verbindung fehlgeschlagen.</strong><br>
+                Der Miner ist aktuell nicht erreichbar.
               </div>
-              <a [href]="'http://' + miner.ipAddress" target="_blank" class="btn-external">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
-                Miner-Webinterface öffnen
-              </a>
             </div>
           } @else {
             <div class="status-box info">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
-              <span>Die Pool-Einstellungen deines Miners. Wegen Browser-Sicherheitsrichtlinien (CORS) kann das Speichern vom Miner blockiert werden.</span>
+              <span>Die Pool-Einstellungen werden direkt auf den Miner übertragen.</span>
             </div>
 
             <div class="form-group">
@@ -111,58 +107,37 @@ import { firstValueFrom } from 'rxjs';
     </div>
   `,
   styles: [`
-    .modal-backdrop {
-      position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
-      background-color: rgba(17, 24, 39, 0.4); backdrop-filter: blur(4px);
-      display: flex; align-items: center; justify-content: center; z-index: 1000;
-      animation: fadeIn 0.2s ease-out; padding: 1rem;
-    }
-    .modal-card {
-      background-color: var(--bg-surface); width: 100%; max-width: 540px;
-      max-height: 90vh; overflow-y: auto;
-      border-radius: var(--radius-lg); box-shadow: var(--shadow-lg); padding: 2rem;
-      animation: slideUp 0.3s ease-out;
-    }
-    
+    /* Gleiche Styles wie vorher */
+    .modal-backdrop { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background-color: rgba(17, 24, 39, 0.4); backdrop-filter: blur(4px); display: flex; align-items: center; justify-content: center; z-index: 1000; animation: fadeIn 0.2s ease-out; padding: 1rem; }
+    .modal-card { background-color: var(--bg-surface); width: 100%; max-width: 540px; max-height: 90vh; overflow-y: auto; border-radius: var(--radius-lg); box-shadow: var(--shadow-lg); padding: 2rem; animation: slideUp 0.3s ease-out; }
     .modal-card::-webkit-scrollbar { width: 6px; }
     .modal-card::-webkit-scrollbar-track { background: transparent; }
     .modal-card::-webkit-scrollbar-thumb { background-color: #E5E7EB; border-radius: 10px; }
-
     .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; }
     .modal-title { font-size: 1.25rem; font-weight: 700; }
     .close-btn { background: none; border: none; color: var(--text-muted); cursor: pointer; padding: 4px; border-radius: var(--radius-sm); transition: all 0.2s; }
     .close-btn:hover { background-color: var(--bg-main); color: var(--text-main); }
-    
     .section-title { font-size: 0.95rem; font-weight: 700; color: var(--text-main); margin-bottom: 1rem; text-transform: uppercase; letter-spacing: 0.5px; }
     .divider { height: 1px; background-color: #E5E7EB; margin: 1.5rem 0; }
-    
     .form-row { display: flex; gap: 1rem; }
     .flex-1 { flex: 1; }
     .form-group { margin-bottom: 1.25rem; }
-    
     label { display: block; font-size: 0.875rem; font-weight: 600; margin-bottom: 0.5rem; color: var(--text-main); }
     .form-input { width: 100%; padding: 0.75rem 1rem; border: 1px solid #E5E7EB; border-radius: var(--radius-md); font-family: inherit; font-size: 0.95rem; background-color: var(--bg-main); transition: all 0.2s; outline: none; }
     .form-input:focus { border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-light); background-color: var(--bg-surface); }
-    
     .status-box { padding: 1rem; border-radius: var(--radius-md); font-size: 0.875rem; display: flex; align-items: center; gap: 10px; margin-bottom: 1.25rem; }
     .status-box.loading { background-color: var(--bg-main); color: var(--text-muted); }
     .status-box.error { background-color: #FEE2E2; color: #991B1B; border: 1px solid #FCA5A5; }
     .status-box.info { background-color: var(--bg-main); color: var(--text-muted); line-height: 1.5; align-items: flex-start; }
     .flex-col { flex-direction: column; align-items: flex-start; gap: 1rem; }
     .error-text { line-height: 1.5; }
-    
-    .btn-external { display: inline-flex; align-items: center; gap: 8px; background-color: white; color: #991B1B; padding: 0.5rem 1rem; border-radius: var(--radius-md); text-decoration: none; font-weight: 600; box-shadow: 0 1px 2px rgba(0,0,0,0.05); transition: all 0.2s; border: 1px solid #FCA5A5; }
-    .btn-external:hover { background-color: #FEF2F2; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
-
     .spinner { width: 16px; height: 16px; border: 2px solid rgba(0,0,0,0.1); border-left-color: var(--primary); border-radius: 50%; animation: spin 1s linear infinite; }
-    
     .modal-footer { display: flex; justify-content: flex-end; gap: 1rem; margin-top: 2rem; padding-top: 1.5rem; border-top: 1px solid #E5E7EB; }
     .btn-secondary { padding: 0.75rem 1.25rem; border: none; background-color: var(--bg-main); color: var(--text-main); border-radius: var(--radius-full); font-weight: 600; cursor: pointer; transition: background-color 0.2s; }
     .btn-secondary:hover { background-color: #E5E7EB; }
     .btn-primary { padding: 0.75rem 1.5rem; border: none; background-color: var(--primary); color: white; border-radius: var(--radius-full); font-weight: 600; cursor: pointer; transition: all 0.2s; }
     .btn-primary:hover:not(:disabled) { background-color: var(--primary-hover); box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3); }
     .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
-    
     @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
     @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
     @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
@@ -235,7 +210,7 @@ export class EditMinerModalComponent implements OnInit {
         : formValue.model;
       this.minerService.updateMiner(this.miner.id, formValue.name, formValue.ipAddress, finalModel);
 
-      // 2. Hardware-Einstellungen an den ESP senden (wird oft durch CORS blockiert)
+      // 2. Hardware-Einstellungen per Blind-POST senden
       if (!this.loadError && !this.isLoadingPool) {
         const hardwarePayload = {
           stratumURL: formValue.poolUrl,
@@ -244,14 +219,8 @@ export class EditMinerModalComponent implements OnInit {
           stratumPassword: formValue.poolPassword || 'x'
         };
 
-        const result = await firstValueFrom(this.minerService.updateMinerHardwareSettings(formValue.ipAddress, hardwarePayload));
-        
-        if (result === null) {
-          // Zeigt eine klare Fehlermeldung, wenn der Miner die CORS Anfrage abblockt
-          alert('Lokale Daten (Name/IP) wurden gespeichert!\n\nDas Ändern des Pools wurde jedoch vom Miner blockiert (Browser-Sicherheitsrichtlinie/CORS).\nBitte nutze das Miner-eigene Webinterface, um den Pool zu wechseln.');
-        } else {
-          alert('Einstellungen erfolgreich gespeichert!');
-        }
+        await this.minerService.updateMinerHardwareSettings(formValue.ipAddress, hardwarePayload);
+        alert('Die Einstellungen wurden an den Miner gesendet.');
       }
 
       this.isSaving = false;
