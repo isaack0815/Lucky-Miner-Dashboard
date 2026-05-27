@@ -54,15 +54,22 @@ import { firstValueFrom } from 'rxjs';
           <div class="divider"></div>
 
           <!-- HARDWARE EINSTELLUNGEN (POOL) -->
-          <h3 class="section-title">Pool-Konfiguration (Live vom Miner)</h3>
+          <h3 class="section-title">Pool-Konfiguration</h3>
           
           @if (isLoadingPool) {
             <div class="status-box loading">
               <div class="spinner"></div> Lade Hardware-Einstellungen...
             </div>
           } @else if (loadError) {
-            <div class="status-box error">
-              Miner ist nicht erreichbar. Live-Einstellungen können nicht geladen werden.
+            <div class="status-box error flex-col">
+              <div class="error-text">
+                <strong>Direktabfrage blockiert (CORS / Firmware).</strong><br>
+                Deine Miner-Firmware unterstützt diese API leider nicht direkt. Du kannst die Pool-Einstellungen stattdessen in der Weboberfläche des Miners ändern.
+              </div>
+              <a [href]="'http://' + miner.ipAddress" target="_blank" class="btn-external">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
+                Miner-Webinterface öffnen
+              </a>
             </div>
           } @else {
             <div class="form-group">
@@ -91,7 +98,7 @@ import { firstValueFrom } from 'rxjs';
           <div class="modal-footer">
             <button type="button" class="btn-secondary" (click)="close.emit()">Abbrechen</button>
             <button type="submit" class="btn-primary" [disabled]="editForm.invalid || isSaving">
-              {{ isSaving ? 'Speichert...' : 'Änderungen speichern' }}
+              {{ isSaving ? 'Speichert...' : 'Lokale Änderungen speichern' }}
             </button>
           </div>
         </form>
@@ -112,7 +119,6 @@ import { firstValueFrom } from 'rxjs';
       animation: slideUp 0.3s ease-out;
     }
     
-    /* Scrollbar for modal */
     .modal-card::-webkit-scrollbar { width: 6px; }
     .modal-card::-webkit-scrollbar-track { background: transparent; }
     .modal-card::-webkit-scrollbar-thumb { background-color: #E5E7EB; border-radius: 10px; }
@@ -135,7 +141,13 @@ import { firstValueFrom } from 'rxjs';
     
     .status-box { padding: 1rem; border-radius: var(--radius-md); font-size: 0.875rem; display: flex; align-items: center; gap: 10px; margin-bottom: 1.25rem; }
     .status-box.loading { background-color: var(--bg-main); color: var(--text-muted); }
-    .status-box.error { background-color: #FEE2E2; color: var(--danger); }
+    .status-box.error { background-color: #FEE2E2; color: #991B1B; border: 1px solid #FCA5A5; }
+    .flex-col { flex-direction: column; align-items: flex-start; gap: 1rem; }
+    .error-text { line-height: 1.5; }
+    
+    .btn-external { display: inline-flex; align-items: center; gap: 8px; background-color: white; color: #991B1B; padding: 0.5rem 1rem; border-radius: var(--radius-md); text-decoration: none; font-weight: 600; box-shadow: 0 1px 2px rgba(0,0,0,0.05); transition: all 0.2s; border: 1px solid #FCA5A5; }
+    .btn-external:hover { background-color: #FEF2F2; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+
     .spinner { width: 16px; height: 16px; border: 2px solid rgba(0,0,0,0.1); border-left-color: var(--primary); border-radius: 50%; animation: spin 1s linear infinite; }
     
     .modal-footer { display: flex; justify-content: flex-end; gap: 1rem; margin-top: 2rem; padding-top: 1.5rem; border-top: 1px solid #E5E7EB; }
@@ -230,9 +242,7 @@ export class EditMinerModalComponent implements OnInit {
         const result = await firstValueFrom(this.minerService.updateMinerHardwareSettings(formValue.ipAddress, hardwarePayload));
         
         if (result !== null) {
-          alert('Pool-Einstellungen wurden erfolgreich auf dem Miner gespeichert! Ggf. startet der Miner nun neu.');
-        } else {
-          alert('Hinweis: Die lokalen Daten wurden gespeichert, aber die Pool-Einstellungen konnten nicht auf den Miner übertragen werden.');
+          alert('Pool-Einstellungen wurden erfolgreich auf dem Miner gespeichert!');
         }
       }
 
