@@ -1,8 +1,12 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { MinerService } from '../services/miner.service';
+import { AddMinerModalComponent } from '../components/add-miner-modal.component';
 
 @Component({
   selector: 'app-dashboard',
   standalone: true,
+  imports: [CommonModule, AddMinerModalComponent],
   template: `
     <div class="dashboard-container">
       <div class="dashboard-header">
@@ -10,7 +14,7 @@ import { Component } from '@angular/core';
           <h1 class="page-title">Übersicht</h1>
           <p class="page-subtitle">Willkommen zurück! Hier ist der Status deiner Miner.</p>
         </div>
-        <button class="btn-primary">
+        <button class="btn-primary" (click)="openAddModal()">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
           Miner hinzufügen
         </button>
@@ -27,28 +31,28 @@ import { Component } from '@angular/core';
             </div>
             <span class="trend positive">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline><polyline points="17 6 23 6 23 12"></polyline></svg>
-              +5.2%
+              +0.0%
             </span>
           </div>
           <div class="stat-content">
-            <h3 class="stat-value">4.2 TH/s</h3>
+            <h3 class="stat-value">0.0 TH/s</h3>
             <p class="stat-label">Gesamte Hashrate</p>
           </div>
         </div>
 
-        <!-- Stat Card 2 -->
+        <!-- Stat Card 2 (Dynamisch) -->
         <div class="stat-card">
           <div class="stat-header">
             <div class="stat-icon bg-emerald">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect><line x1="8" y1="21" x2="16" y2="21"></line><line x1="12" y1="17" x2="12" y2="21"></line></svg>
             </div>
             <span class="trend neutral">
-              <span>5 / 5</span>
+              <span>{{ minerService.onlineMiners() }} / {{ minerService.totalMiners() }}</span>
             </span>
           </div>
           <div class="stat-content">
-            <h3 class="stat-value">5 Online</h3>
-            <p class="stat-label">Aktive Miner</p>
+            <h3 class="stat-value">{{ minerService.totalMiners() }} Gesamt</h3>
+            <p class="stat-label">Registrierte Miner</p>
           </div>
         </div>
 
@@ -60,7 +64,7 @@ import { Component } from '@angular/core';
             </div>
           </div>
           <div class="stat-content">
-            <h3 class="stat-value">12.4k</h3>
+            <h3 class="stat-value">0</h3>
             <p class="stat-label">Gefundene Shares (24h)</p>
           </div>
         </div>
@@ -71,13 +75,13 @@ import { Component } from '@angular/core';
             <div class="stat-icon bg-danger">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 14.76V3.5a2.5 2.5 0 0 0-5 0v11.26a4.5 4.5 0 1 0 5 0z"></path></svg>
             </div>
-            <span class="trend negative">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 18 13.5 8.5 8.5 13.5 1 6"></polyline><polyline points="17 18 23 18 23 12"></polyline></svg>
-              +1.2°C
+            <span class="trend neutral">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+              0.0°C
             </span>
           </div>
           <div class="stat-content">
-            <h3 class="stat-value">54 °C</h3>
+            <h3 class="stat-value">0 °C</h3>
             <p class="stat-label">Durchschnittliche Temp.</p>
           </div>
         </div>
@@ -87,40 +91,54 @@ import { Component } from '@angular/core';
       <!-- Main Content Area -->
       <div class="dashboard-widgets">
         <div class="widget-card lg-col">
-          <h2 class="widget-title">Performance Verlauf</h2>
-          <div class="placeholder-chart">
-            <p class="text-muted">Hier kommt später ein Chart hin.</p>
-          </div>
+          <h2 class="widget-title">Meine Miner</h2>
+          
+          @if (minerService.miners().length === 0) {
+            <div class="empty-state">
+              <div class="empty-icon">
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect><line x1="8" y1="21" x2="16" y2="21"></line><line x1="12" y1="17" x2="12" y2="21"></line></svg>
+              </div>
+              <h3>Keine Miner vorhanden</h3>
+              <p>Füge deinen ersten Miner hinzu, um Statistiken zu sammeln.</p>
+              <button class="btn-primary mt-4" (click)="openAddModal()">Miner hinzufügen</button>
+            </div>
+          } @else {
+            <div class="miner-list">
+              @for (miner of minerService.miners(); track miner.id) {
+                <div class="miner-item">
+                  <div class="miner-info">
+                    <div class="status-indicator" [class.offline]="miner.status === 'offline'"></div>
+                    <div>
+                      <h4 class="miner-name">{{ miner.name }}</h4>
+                      <p class="miner-ip">{{ miner.ipAddress }} • {{ miner.model }}</p>
+                    </div>
+                  </div>
+                  <div class="miner-actions">
+                    <button class="btn-icon" (click)="deleteMiner(miner.id)" title="Miner entfernen">
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                    </button>
+                  </div>
+                </div>
+              }
+            </div>
+          }
         </div>
         
         <div class="widget-card">
           <h2 class="widget-title">Letzte Aktivitäten</h2>
           <div class="activity-list">
-            <div class="activity-item">
-              <div class="activity-dot bg-success"></div>
-              <div class="activity-details">
-                <p class="activity-desc">Miner "Lucky-01" hat einen Block Share gefunden</p>
-                <span class="activity-time">Vor 2 Minuten</span>
-              </div>
-            </div>
-            <div class="activity-item">
-              <div class="activity-dot bg-warning"></div>
-              <div class="activity-details">
-                <p class="activity-desc">Miner "Lucky-03" Temperatur leicht erhöht (62°C)</p>
-                <span class="activity-time">Vor 15 Minuten</span>
-              </div>
-            </div>
-            <div class="activity-item">
-              <div class="activity-dot bg-success"></div>
-              <div class="activity-details">
-                <p class="activity-desc">Miner "Lucky-05" erfolgreich gestartet</p>
-                <span class="activity-time">Vor 1 Stunde</span>
-              </div>
+            <div class="text-muted" style="text-align: center; padding: 2rem 0;">
+              Noch keine Aktivitäten aufgezeichnet.
             </div>
           </div>
         </div>
       </div>
     </div>
+
+    <!-- Modal Component -->
+    @if (showAddModal) {
+      <app-add-miner-modal (close)="closeAddModal()"></app-add-miner-modal>
+    }
   `,
   styles: [`
     .dashboard-container {
@@ -156,11 +174,14 @@ import { Component } from '@angular/core';
       font-family: inherit;
       display: flex;
       align-items: center;
+      justify-content: center;
       gap: 8px;
       cursor: pointer;
       transition: background-color 0.2s;
       box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);
     }
+
+    .mt-4 { margin-top: 1rem; }
 
     .btn-primary:hover {
       background-color: var(--primary-hover);
@@ -243,6 +264,8 @@ import { Component } from '@angular/core';
       border-radius: var(--radius-lg);
       padding: 1.5rem;
       box-shadow: var(--shadow-sm);
+      display: flex;
+      flex-direction: column;
     }
 
     .widget-title {
@@ -250,52 +273,129 @@ import { Component } from '@angular/core';
       margin-bottom: 1.5rem;
     }
 
-    .placeholder-chart {
-      height: 250px;
+    .empty-state {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 3rem 1rem;
+      text-align: center;
       background: var(--bg-main);
       border-radius: var(--radius-md);
+      border: 2px dashed #E5E7EB;
+      flex-grow: 1;
+    }
+
+    .empty-icon {
+      width: 64px;
+      height: 64px;
+      background: white;
+      border-radius: 50%;
       display: flex;
       align-items: center;
       justify-content: center;
-      border: 2px dashed #E5E7EB;
+      color: var(--text-muted);
+      margin-bottom: 1rem;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .empty-state h3 {
+      margin-bottom: 0.5rem;
+    }
+
+    .empty-state p {
+      color: var(--text-muted);
+    }
+
+    .miner-list {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    .miner-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 1rem;
+      background-color: var(--bg-main);
+      border-radius: var(--radius-md);
+      transition: transform 0.2s;
+    }
+
+    .miner-item:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-sm);
+    }
+
+    .miner-info {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .status-indicator {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background-color: var(--success);
+      box-shadow: 0 0 0 3px var(--success-light);
+    }
+
+    .status-indicator.offline {
+      background-color: var(--text-muted);
+      box-shadow: 0 0 0 3px #E5E7EB;
+    }
+
+    .miner-name {
+      font-weight: 600;
+      font-size: 1rem;
+      margin-bottom: 0.25rem;
+    }
+
+    .miner-ip {
+      font-size: 0.875rem;
+      color: var(--text-muted);
+    }
+
+    .btn-icon {
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      cursor: pointer;
+      padding: 8px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s;
+    }
+
+    .btn-icon:hover {
+      background-color: #FEE2E2;
+      color: var(--danger);
     }
 
     .text-muted {
       color: var(--text-muted);
     }
-
-    .activity-list {
-      display: flex;
-      flex-direction: column;
-      gap: 1.5rem;
-    }
-
-    .activity-item {
-      display: flex;
-      gap: 1rem;
-    }
-
-    .activity-dot {
-      width: 12px;
-      height: 12px;
-      border-radius: 50%;
-      margin-top: 5px;
-      flex-shrink: 0;
-    }
-
-    .bg-success { background-color: var(--success); }
-    .bg-warning { background-color: var(--warning); }
-
-    .activity-desc {
-      font-weight: 500;
-      font-size: 0.95rem;
-      margin-bottom: 0.25rem;
-    }
-
-    .activity-time {
-      font-size: 0.8rem;
-      color: var(--text-muted);
-    }
   `]
 })
-export class DashboardComponent {}
+export class DashboardComponent {
+  minerService = inject(MinerService);
+  showAddModal = false;
+
+  openAddModal() {
+    this.showAddModal = true;
+  }
+
+  closeAddModal() {
+    this.showAddModal = false;
+  }
+
+  deleteMiner(id: string) {
+    if (confirm('Möchtest du diesen Miner wirklich entfernen?')) {
+      this.minerService.deleteMiner(id);
+    }
+  }
+}
