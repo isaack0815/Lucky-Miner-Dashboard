@@ -22,16 +22,24 @@ import { AddMinerModalComponent } from '../components/add-miner-modal.component'
 
       @if (minerService.miners().length === 0) {
         <div class="empty-state">
-          <!-- (Empty State wie vorher) -->
           <div class="empty-icon">
             <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect><line x1="8" y1="21" x2="16" y2="21"></line><line x1="12" y1="17" x2="12" y2="21"></line></svg>
           </div>
           <h2>Keine Miner gefunden</h2>
           <p>Du hast noch keine Miner hinzugefügt. Klicke auf den Button oben rechts, um zu starten.</p>
         </div>
+      } @else if (minerService.filteredMiners().length === 0) {
+        <div class="empty-state search-empty">
+          <div class="empty-icon">
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+          </div>
+          <h2>Keine Treffer</h2>
+          <p>Es wurden keine Miner für den Suchbegriff <strong>"{{ minerService.searchTerm() }}"</strong> gefunden.</p>
+          <button class="btn-secondary mt-4" (click)="minerService.searchTerm.set('')">Suche zurücksetzen</button>
+        </div>
       } @else {
         <div class="miner-grid">
-          @for (miner of minerService.miners(); track miner.id) {
+          @for (miner of minerService.filteredMiners(); track miner.id) {
             <div class="miner-card">
               <div class="card-header">
                 <div class="miner-title-wrapper">
@@ -80,7 +88,7 @@ import { AddMinerModalComponent } from '../components/add-miner-modal.component'
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
                 </button>
 
-                <!-- Einstellungen Button (Platzhalter für später) -->
+                <!-- Einstellungen Button -->
                 <button class="btn-action" title="Einstellungen">
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
                 </button>
@@ -100,17 +108,23 @@ import { AddMinerModalComponent } from '../components/add-miner-modal.component'
       <app-add-miner-modal (close)="closeAddModal()"></app-add-miner-modal>
     }
   `,
-  styles: [ /* (Styles bleiben unverändert) */ `
+  styles: [`
     .page-container { padding: 0 2rem 2rem 2rem; max-width: 1400px; margin: 0 auto; }
     .page-header { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 2rem; }
     .page-title { font-size: 2rem; margin-bottom: 0.5rem; }
     .page-subtitle { color: var(--text-muted); font-size: 1rem; }
     .btn-primary { background-color: var(--primary); color: white; border: none; padding: 0.75rem 1.5rem; border-radius: var(--radius-full); font-weight: 600; font-family: inherit; display: flex; align-items: center; justify-content: center; gap: 8px; cursor: pointer; transition: background-color 0.2s; box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3); }
     .btn-primary:hover { background-color: var(--primary-hover); }
+    
     .empty-state { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 5rem 1rem; text-align: center; background: var(--bg-surface); border-radius: var(--radius-lg); box-shadow: var(--shadow-sm); }
     .empty-icon { width: 80px; height: 80px; background: var(--bg-main); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: var(--text-muted); margin-bottom: 1.5rem; }
     .empty-state h2 { margin-bottom: 0.5rem; font-size: 1.5rem; }
     .empty-state p { color: var(--text-muted); max-width: 400px; }
+    
+    .btn-secondary { background-color: var(--bg-main); color: var(--text-main); border: none; padding: 0.5rem 1rem; border-radius: var(--radius-full); font-weight: 600; font-family: inherit; cursor: pointer; transition: background-color 0.2s; }
+    .btn-secondary:hover { background-color: #E5E7EB; }
+    .mt-4 { margin-top: 1rem; }
+
     .miner-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 1.5rem; }
     .miner-card { background: var(--bg-surface); border-radius: var(--radius-lg); padding: 1.5rem; box-shadow: var(--shadow-sm); display: flex; flex-direction: column; transition: transform 0.2s, box-shadow 0.2s; }
     .miner-card:hover { transform: translateY(-4px); box-shadow: var(--shadow-md); }

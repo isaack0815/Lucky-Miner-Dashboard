@@ -14,6 +14,22 @@ export class MinerService {
   // Signal für die Miner-Liste
   miners = signal<Miner[]>(this.loadFromStorage());
 
+  // NEU: Suchbegriff und abgeleitete, gefilterte Liste
+  searchTerm = signal<string>('');
+  
+  filteredMiners = computed(() => {
+    const term = this.searchTerm().toLowerCase().trim();
+    const allMiners = this.miners();
+    
+    if (!term) return allMiners;
+    
+    return allMiners.filter(m => 
+      m.name.toLowerCase().includes(term) || 
+      m.ipAddress.includes(term) ||
+      m.model.toLowerCase().includes(term)
+    );
+  });
+
   // Abgeleitete Signale für das Dashboard
   totalMiners = computed(() => this.miners().length);
   onlineMiners = computed(() => this.miners().filter(m => m.status === 'online').length);
@@ -32,7 +48,6 @@ export class MinerService {
     this.miners().reduce((acc, m) => acc + (m.status === 'online' ? m.shares : 0), 0)
   );
 
-  // Neuer abgeleiteter Wert: Gesamtstromverbrauch in Watt
   totalPower = computed(() => 
     this.miners().reduce((acc, m) => acc + (m.status === 'online' ? (m.power || 0) : 0), 0)
   );

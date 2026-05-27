@@ -1,4 +1,5 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
+import { MinerService } from '../services/miner.service';
 
 @Component({
   selector: 'app-header',
@@ -7,7 +8,13 @@ import { Component } from '@angular/core';
     <header class="header">
       <div class="header-search">
         <svg class="search-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-        <input type="text" placeholder="Miner suchen..." class="search-input" />
+        <input 
+          type="text" 
+          placeholder="Miner suchen..." 
+          class="search-input" 
+          [value]="minerService.searchTerm()"
+          (input)="onSearch($event)"
+        />
       </div>
 
       <div class="header-actions">
@@ -130,4 +137,11 @@ import { Component } from '@angular/core';
     }
   `]
 })
-export class HeaderComponent {}
+export class HeaderComponent {
+  minerService = inject(MinerService);
+
+  onSearch(event: Event) {
+    const input = event.target as HTMLInputElement;
+    this.minerService.searchTerm.set(input.value);
+  }
+}
