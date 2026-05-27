@@ -154,18 +154,18 @@ export class MinerService {
     }
   }
 
-  // NEU: Ruft die aktuellen Hardware-Einstellungen ab
+  // Ruft die aktuellen Hardware-Einstellungen ab (aus der info-API)
   getMinerHardwareSettings(ip: string) {
-    return this.http.get<any>(this.getApiUrl(ip, '/api/settings')).pipe(
+    return this.http.get<any>(this.getApiUrl(ip, '/api/system/info')).pipe(
       catchError(() => of(null))
     );
   }
 
-  // NEU: Speichert neue Pool-Einstellungen auf der Hardware
+  // Speichert neue Pool-Einstellungen auf der Hardware per PATCH
   updateMinerHardwareSettings(ip: string, settings: any) {
-    return this.http.post(this.getApiUrl(ip, '/api/settings'), settings).pipe(
+    return this.http.patch(this.getApiUrl(ip, '/api/system/info'), settings).pipe(
       catchError((err) => {
-        console.error('Fehler beim Speichern der Hardware-Einstellungen', err);
+        console.error('Fehler beim Speichern der Hardware-Einstellungen per PATCH', err);
         return of(null);
       })
     );
