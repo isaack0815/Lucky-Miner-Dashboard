@@ -48,41 +48,46 @@ export class MinerService {
     }
   }
 
-  // --- API Hilfsfunktion für CORS ---
+  // --- API Hilfsfunktion für CORS / Proxy ---
   private getApiUrl(ip: string, endpoint: string): string {
-    // Toggle: Setze dies auf true, wenn du das Projekt herunterlädst und lokal ausführst!
-    // In der Dyad.sh Cloud belassen wir es auf false und nutzen die CORS-Extension im Browser.
+    // Da der Miner CORS erlaubt (Access-Control-Allow-Origin: *), 
+    // können wir direkt anpingen, wenn wir lokal HTTP nutzen!
     const USE_LOCAL_PROXY = false;
 
     if (USE_LOCAL_PROXY) {
       return `/api-proxy/${ip}${endpoint}`;
     } else {
-      return `http://${ip}${endpoint}`;
+      // Wenn die IP schon ein http:// enthält, nicht doppelt anhängen
+      const cleanIp = ip.replace(/^https?:\/\//, '');
+      return `http://${cleanIp}${endpoint}`;
     }
   }
 
   private startPolling() {
     this.refreshAll();
-    setInterval(() => this.refreshAll(), 10000);
+    setInterval(() => this.refreshAll(), 10000); // Alle 10 Sekunden updaten
   }
 
   async refreshAll() {
     const currentMiners = this.miners();
     for (const miner of currentMiners) {
       try {
+        // Neuer Endpunkt: /api/system/info
         const stats = await firstValueFrom(
-          this.http.get<any>(this.getApiUrl(miner.ipAddress, '/api/system/statistics')).pipe(
+          this.http.get<any>(this.getApiUrl(miner.ipAddress, '/api/system/info')).pipe(
             catchError(() => of(null))
           )
         );
 
         if (stats) {
+          // Werte aus dem JSON der neuen Firmware auslesen
           this.miners.update(ms => ms.map(m => m.id === miner.id ? {
             ...m,
             status: 'online',
-            hashrate: (stats.hashrate || 0) / 1000, 
-            temp: stats.asicTemp || 0,
-            shares: stats.shares || stats.bestShare || 0
+            // Hashrate kommt als z.B. 1429.59 (vermutlich GH/s), also / 1000 für TH/s
+            hashrate: (stats.hashRate || 0) / 1000, 
+            temp: stats.temp || 0,
+            shares: stats.sharesAccepted || 0
           } : m));
         } else {
           this.miners.update(ms => ms.map(m => m.id === miner.id ? {...m, status: 'offline'} : m));
