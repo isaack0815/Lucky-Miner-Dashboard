@@ -4,12 +4,13 @@ import { HeaderComponent } from './components/header.component';
 import { DashboardComponent } from './pages/dashboard.component';
 import { MyMinersComponent } from './pages/my-miners.component';
 import { StatsComponent } from './pages/stats.component';
+import { SettingsComponent } from './pages/settings.component';
 import { NavigationService } from './services/navigation.service';
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [SidebarComponent, HeaderComponent, DashboardComponent, MyMinersComponent, StatsComponent],
+  imports: [SidebarComponent, HeaderComponent, DashboardComponent, MyMinersComponent, StatsComponent, SettingsComponent],
   template: `
     <div class="app-layout">
       <app-sidebar></app-sidebar>
@@ -27,10 +28,12 @@ import { NavigationService } from './services/navigation.service';
               @case ('stats') {
                 <app-stats></app-stats>
               }
+              @case ('settings') {
+                <app-settings></app-settings>
+              }
               @default {
                 <div style="padding: 2rem; text-align: center; color: var(--text-muted);">
-                  <h2>Seite im Aufbau</h2>
-                  <p>Dieser Bereich wird demnächst verfügbar sein.</p>
+                  <h2>Seite nicht gefunden</h2>
                 </div>
               }
             }

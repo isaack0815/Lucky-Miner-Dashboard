@@ -4,17 +4,24 @@ import { catchError } from 'rxjs/operators';
 import { of, firstValueFrom } from 'rxjs';
 import { Miner, ShareLog, MinerApiResponse } from '../models/miner.model';
 
+export interface AppSettings {
+  refreshInterval: number; // in Millisekunden
+}
+
 @Injectable({
   providedIn: 'root'
 })
 export class MinerService {
   private readonly STORAGE_KEY = 'luckyminers_data';
+  private readonly SETTINGS_KEY = 'luckyminers_settings';
   private http = inject(HttpClient);
+  private pollingIntervalId: any = null;
 
   miners = signal<Miner[]>(this.loadFromStorage());
+  settings = signal<AppSettings>(this.loadSettings());
   searchTerm = signal<string>('');
   
-  // Neues Signal für die Share-Logs (speichert die letzten 50 Einträge)
+  // Signal für die Share-Logs
   shareLogs = signal<ShareLog[]>([]);
   
   filteredMiners = computed(() => {
@@ -50,10 +57,17 @@ export class MinerService {
   );
 
   constructor() {
+    // Automatisches Speichern der Miner bei Änderungen
     effect(() => {
       localStorage.setItem(this.STORAGE_KEY, JSON.stringify(this.miners()));
     });
-    this.startPolling();
+    
+    // Automatisches Anwenden und Speichern der Einstellungen (Polling)
+    effect(() => {
+      const currentSettings = this.settings();
+      localStorage.setItem(this.SETTINGS_KEY, JSON.stringify(currentSettings));
+      this.updatePolling(currentSettings.refreshInterval);
+    });
   }
 
   private loadFromStorage(): Miner[] {
@@ -65,14 +79,26 @@ export class MinerService {
     }
   }
 
+  private loadSettings(): AppSettings {
+    try {
+      const stored = localStorage.getItem(this.SETTINGS_KEY);
+      return stored ? JSON.parse(stored) : { refreshInterval: 10000 }; // Standard: 10 Sekunden
+    } catch(e) {
+      return { refreshInterval: 10000 };
+    }
+  }
+
   private getApiUrl(ip: string, endpoint: string): string {
     const cleanIp = ip.replace(/^https?:\/\//, '');
     return `http://${cleanIp}${endpoint}`;
   }
 
-  private startPolling() {
-    this.refreshAll();
-    setInterval(() => this.refreshAll(), 10000);
+  private updatePolling(intervalMs: number) {
+    if (this.pollingIntervalId) {
+      clearInterval(this.pollingIntervalId);
+    }
+    this.refreshAll(); // Direkt einmal abfragen
+    this.pollingIntervalId = setInterval(() => this.refreshAll(), intervalMs);
   }
 
   async refreshAll() {
@@ -88,7 +114,6 @@ export class MinerService {
         if (stats) {
           const newShares = stats.sharesAccepted || 0;
           
-          // Share-Log Logik: Nur loggen, wenn der Miner vorher schon online war und Shares gestiegen sind
           if (miner.status === 'online' && newShares > miner.shares) {
             const diff = newShares - miner.shares;
             this.addShareLog(miner.id, miner.name, diff, newShares);
@@ -124,9 +149,10 @@ export class MinerService {
       sharesAdded,
       totalShares
     };
-    // Füge neues Log oben ein und behalte maximal die letzten 50 Einträge
     this.shareLogs.update(logs => [newLog, ...logs].slice(0, 50));
   }
+
+  /* --- VERWALTUNG --- */
 
   addMiner(name: string, ipAddress: string, model: string) {
     const generateId = () => Date.now().toString(36) + Math.random().toString(36).substring(2, 9);
@@ -159,20 +185,51 @@ export class MinerService {
   restartMiner(id: string) {
     const miner = this.miners().find(m => m.id === id);
     if (miner) {
-      fetch(this.getApiUrl(miner.ipAddress, '/api/system/restart'), {
-        method: 'POST',
-        mode: 'no-cors'
-      }).catch(e => console.error(e));
+      fetch(this.getApiUrl(miner.ipAddress, '/api/system/restart'), { method: 'POST', mode: 'no-cors' }).catch(e => console.error(e));
     }
   }
 
   identifyMiner(id: string) {
     const miner = this.miners().find(m => m.id === id);
     if (miner) {
-      fetch(this.getApiUrl(miner.ipAddress, '/api/system/identify'), {
-        method: 'POST',
-        mode: 'no-cors'
-      }).catch(e => console.error(e));
+      fetch(this.getApiUrl(miner.ipAddress, '/api/system/identify'), { method: 'POST', mode: 'no-cors' }).catch(e => console.error(e));
     }
+  }
+
+  /* --- EINSTELLUNGEN & DATEN --- */
+
+  updateRefreshInterval(ms: number) {
+    this.settings.update(s => ({ ...s, refreshInterval: ms }));
+  }
+
+  exportData() {
+    const dataStr = JSON.stringify(this.miners(), null, 2);
+    const blob = new Blob([dataStr], { type: 'application/json' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `luckyminer-backup-${new Date().toISOString().slice(0, 10)}.json`;
+    a.click();
+    window.URL.revokeObjectURL(url);
+  }
+
+  importData(jsonString: string): boolean {
+    try {
+      const data = JSON.parse(jsonString);
+      if (Array.isArray(data)) {
+        // Optionale Validierung ob die Struktur ungefähr passt könnte man hier machen
+        this.miners.set(data);
+        this.refreshAll();
+        return true;
+      }
+      return false;
+    } catch(e) {
+      return false;
+    }
+  }
+
+  resetAllData() {
+    this.miners.set([]);
+    this.shareLogs.set([]);
   }
 }
