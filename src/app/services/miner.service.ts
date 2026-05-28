@@ -2,7 +2,7 @@ import { Injectable, signal, effect, computed, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { catchError } from 'rxjs/operators';
 import { of, firstValueFrom } from 'rxjs';
-import { Miner } from '../models/miner.model';
+import { Miner, ShareLog } from '../models/miner.model';
 
 @Injectable({
   providedIn: 'root'
@@ -13,6 +13,9 @@ export class MinerService {
 
   miners = signal<Miner[]>(this.loadFromStorage());
   searchTerm = signal<string>('');
+  
+  // Neues Signal für die Share-Logs (speichert die letzten 50 Einträge)
+  shareLogs = signal<ShareLog[]>([]);
   
   filteredMiners = computed(() => {
     const term = this.searchTerm().toLowerCase().trim();
@@ -83,12 +86,20 @@ export class MinerService {
         );
 
         if (stats) {
+          const newShares = stats.sharesAccepted || 0;
+          
+          // Share-Log Logik: Nur loggen, wenn der Miner vorher schon online war und Shares gestiegen sind
+          if (miner.status === 'online' && newShares > miner.shares) {
+            const diff = newShares - miner.shares;
+            this.addShareLog(miner.id, miner.name, diff, newShares);
+          }
+
           this.miners.update(ms => ms.map(m => m.id === miner.id ? {
             ...m,
             status: 'online',
             hashrate: (stats.hashRate || 0) / 1000, 
             temp: stats.temp || 0,
-            shares: stats.sharesAccepted || 0,
+            shares: newShares,
             bestDiff: stats.bestDiff,
             uptimeSeconds: stats.uptimeSeconds,
             fanSpeed: stats.fanSpeed,
@@ -102,6 +113,19 @@ export class MinerService {
         this.miners.update(ms => ms.map(m => m.id === miner.id ? {...m, status: 'offline'} : m));
       }
     }
+  }
+
+  private addShareLog(minerId: string, minerName: string, sharesAdded: number, totalShares: number) {
+    const newLog: ShareLog = {
+      id: Math.random().toString(36).substring(2, 9),
+      timestamp: new Date(),
+      minerId,
+      minerName,
+      sharesAdded,
+      totalShares
+    };
+    // Füge neues Log oben ein und behalte maximal die letzten 50 Einträge
+    this.shareLogs.update(logs => [newLog, ...logs].slice(0, 50));
   }
 
   addMiner(name: string, ipAddress: string, model: string) {
@@ -149,27 +173,6 @@ export class MinerService {
         method: 'POST',
         mode: 'no-cors'
       }).catch(e => console.error(e));
-    }
-  }
-
-  getMinerHardwareSettings(ip: string) {
-    return this.http.get<any>(this.getApiUrl(ip, '/api/system/info')).pipe(
-      catchError(() => of(null))
-    );
-  }
-
-  async updateMinerHardwareSettings(ip: string, settings: any) {
-    try {
-      // KORREKTUR: Der POST-Request muss an /api/configuration gehen!
-      await fetch(this.getApiUrl(ip, '/api/configuration'), {
-        method: 'POST',
-        mode: 'no-cors',
-        body: JSON.stringify(settings)
-      });
-      return true;
-    } catch (e) {
-      console.error('Fetch error:', e);
-      return null;
     }
   }
 }

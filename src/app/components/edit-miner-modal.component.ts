@@ -3,7 +3,6 @@ import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { MinerService } from '../services/miner.service';
 import { Miner } from '../models/miner.model';
-import { firstValueFrom } from 'rxjs';
 
 @Component({
   selector: 'app-edit-miner-modal',
@@ -21,17 +20,14 @@ import { firstValueFrom } from 'rxjs';
 
         <form [formGroup]="editForm" (ngSubmit)="onSubmit()">
           
-          <!-- LOKALE EINSTELLUNGEN -->
-          <h3 class="section-title">Lokale Anzeige</h3>
-          <div class="form-row">
-            <div class="form-group flex-1">
-              <label for="name">Name des Miners</label>
-              <input type="text" id="name" formControlName="name" class="form-input">
-            </div>
-            <div class="form-group flex-1">
-              <label for="ipAddress">IP-Adresse</label>
-              <input type="text" id="ipAddress" formControlName="ipAddress" class="form-input">
-            </div>
+          <div class="form-group">
+            <label for="name">Name des Miners</label>
+            <input type="text" id="name" formControlName="name" class="form-input">
+          </div>
+
+          <div class="form-group">
+            <label for="ipAddress">IP-Adresse</label>
+            <input type="text" id="ipAddress" formControlName="ipAddress" class="form-input">
           </div>
 
           <div class="form-group">
@@ -51,87 +47,25 @@ import { firstValueFrom } from 'rxjs';
             </div>
           }
 
-          <div class="divider"></div>
-
-          <!-- HARDWARE EINSTELLUNGEN (POOL) -->
-          <h3 class="section-title">Pool-Konfiguration</h3>
-          
-          @if (isLoadingPool) {
-            <div class="status-box loading">
-              <div class="spinner"></div> Lade Hardware-Einstellungen...
-            </div>
-          } @else if (loadError) {
-            <div class="status-box error flex-col">
-              <div class="error-text">
-                <strong>Verbindung fehlgeschlagen.</strong><br>
-                Der Miner ist aktuell nicht erreichbar.
-              </div>
-            </div>
-          } @else {
-            <div class="status-box info">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
-              <span>Die Pool-Einstellungen werden direkt auf den Miner übertragen.</span>
-            </div>
-
-            <div class="form-group">
-              <label for="poolUrl">Pool URL</label>
-              <input type="text" id="poolUrl" formControlName="poolUrl" class="form-input" placeholder="z.B. eu.luckyminer.io">
-            </div>
-            
-            <div class="form-row">
-              <div class="form-group flex-1">
-                <label for="poolPort">Port</label>
-                <input type="number" id="poolPort" formControlName="poolPort" class="form-input" placeholder="3333">
-              </div>
-            </div>
-
-            <div class="form-group">
-              <label for="poolUser">Worker / BTC Adresse</label>
-              <input type="text" id="poolUser" formControlName="poolUser" class="form-input" placeholder="bc1q...">
-            </div>
-
-            <div class="form-group">
-              <label for="poolPassword">Passwort (Optional)</label>
-              <input type="text" id="poolPassword" formControlName="poolPassword" class="form-input" placeholder="x">
-            </div>
-          }
-
           <div class="modal-footer">
             <button type="button" class="btn-secondary" (click)="close.emit()">Abbrechen</button>
-            <button type="submit" class="btn-primary" [disabled]="editForm.invalid || isSaving">
-              {{ isSaving ? 'Speichert...' : 'Speichern' }}
-            </button>
+            <button type="submit" class="btn-primary" [disabled]="editForm.invalid">Speichern</button>
           </div>
         </form>
       </div>
     </div>
   `,
   styles: [`
-    /* Gleiche Styles wie vorher */
     .modal-backdrop { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background-color: rgba(17, 24, 39, 0.4); backdrop-filter: blur(4px); display: flex; align-items: center; justify-content: center; z-index: 1000; animation: fadeIn 0.2s ease-out; padding: 1rem; }
-    .modal-card { background-color: var(--bg-surface); width: 100%; max-width: 540px; max-height: 90vh; overflow-y: auto; border-radius: var(--radius-lg); box-shadow: var(--shadow-lg); padding: 2rem; animation: slideUp 0.3s ease-out; }
-    .modal-card::-webkit-scrollbar { width: 6px; }
-    .modal-card::-webkit-scrollbar-track { background: transparent; }
-    .modal-card::-webkit-scrollbar-thumb { background-color: #E5E7EB; border-radius: 10px; }
+    .modal-card { background-color: var(--bg-surface); width: 100%; max-width: 480px; border-radius: var(--radius-lg); box-shadow: var(--shadow-lg); padding: 2rem; animation: slideUp 0.3s ease-out; }
     .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; }
     .modal-title { font-size: 1.25rem; font-weight: 700; }
     .close-btn { background: none; border: none; color: var(--text-muted); cursor: pointer; padding: 4px; border-radius: var(--radius-sm); transition: all 0.2s; }
     .close-btn:hover { background-color: var(--bg-main); color: var(--text-main); }
-    .section-title { font-size: 0.95rem; font-weight: 700; color: var(--text-main); margin-bottom: 1rem; text-transform: uppercase; letter-spacing: 0.5px; }
-    .divider { height: 1px; background-color: #E5E7EB; margin: 1.5rem 0; }
-    .form-row { display: flex; gap: 1rem; }
-    .flex-1 { flex: 1; }
     .form-group { margin-bottom: 1.25rem; }
     label { display: block; font-size: 0.875rem; font-weight: 600; margin-bottom: 0.5rem; color: var(--text-main); }
     .form-input { width: 100%; padding: 0.75rem 1rem; border: 1px solid #E5E7EB; border-radius: var(--radius-md); font-family: inherit; font-size: 0.95rem; background-color: var(--bg-main); transition: all 0.2s; outline: none; }
     .form-input:focus { border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-light); background-color: var(--bg-surface); }
-    .status-box { padding: 1rem; border-radius: var(--radius-md); font-size: 0.875rem; display: flex; align-items: center; gap: 10px; margin-bottom: 1.25rem; }
-    .status-box.loading { background-color: var(--bg-main); color: var(--text-muted); }
-    .status-box.error { background-color: #FEE2E2; color: #991B1B; border: 1px solid #FCA5A5; }
-    .status-box.info { background-color: var(--bg-main); color: var(--text-muted); line-height: 1.5; align-items: flex-start; }
-    .flex-col { flex-direction: column; align-items: flex-start; gap: 1rem; }
-    .error-text { line-height: 1.5; }
-    .spinner { width: 16px; height: 16px; border: 2px solid rgba(0,0,0,0.1); border-left-color: var(--primary); border-radius: 50%; animation: spin 1s linear infinite; }
     .modal-footer { display: flex; justify-content: flex-end; gap: 1rem; margin-top: 2rem; padding-top: 1.5rem; border-top: 1px solid #E5E7EB; }
     .btn-secondary { padding: 0.75rem 1.25rem; border: none; background-color: var(--bg-main); color: var(--text-main); border-radius: var(--radius-full); font-weight: 600; cursor: pointer; transition: background-color 0.2s; }
     .btn-secondary:hover { background-color: #E5E7EB; }
@@ -140,7 +74,6 @@ import { firstValueFrom } from 'rxjs';
     .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
     @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
     @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
   `]
 })
 export class EditMinerModalComponent implements OnInit {
@@ -148,10 +81,6 @@ export class EditMinerModalComponent implements OnInit {
   @Output() close = new EventEmitter<void>();
   
   editForm!: FormGroup;
-  
-  isLoadingPool = true;
-  loadError = false;
-  isSaving = false;
 
   constructor(private fb: FormBuilder, private minerService: MinerService) {}
 
@@ -159,71 +88,21 @@ export class EditMinerModalComponent implements OnInit {
     const isStandardModel = ['v06', 'v07', 'v08'].includes(this.miner.model);
     
     this.editForm = this.fb.group({
-      // Lokale Anzeige-Daten
       name: [this.miner.name, Validators.required],
       ipAddress: [this.miner.ipAddress, [Validators.required, Validators.pattern('^([0-9]{1,3}\\.){3}[0-9]{1,3}$')]],
       model: [isStandardModel ? this.miner.model : 'other', Validators.required],
-      customModel: [isStandardModel ? '' : this.miner.model],
-      
-      // Hardware-Daten (Pool)
-      poolUrl: [''],
-      poolPort: [''],
-      poolUser: [''],
-      poolPassword: ['']
+      customModel: [isStandardModel ? '' : this.miner.model]
     });
-
-    this.fetchHardwareSettings();
   }
 
-  async fetchHardwareSettings() {
-    this.isLoadingPool = true;
-    this.loadError = false;
-
-    try {
-      const settings = await firstValueFrom(this.minerService.getMinerHardwareSettings(this.miner.ipAddress));
-      
-      if (settings) {
-        this.editForm.patchValue({
-          poolUrl: settings.stratumURL || '',
-          poolPort: settings.stratumPort || '',
-          poolUser: settings.stratumUser || '',
-          poolPassword: settings.stratumPassword || ''
-        });
-      } else {
-        this.loadError = true;
-      }
-    } catch (e) {
-      this.loadError = true;
-    } finally {
-      this.isLoadingPool = false;
-    }
-  }
-
-  async onSubmit() {
+  onSubmit() {
     if (this.editForm.valid) {
-      this.isSaving = true;
       const formValue = this.editForm.value;
-      
-      // 1. Lokale Metadaten im Browser updaten
       const finalModel = formValue.model === 'other' 
         ? (formValue.customModel || 'Custom') 
         : formValue.model;
+        
       this.minerService.updateMiner(this.miner.id, formValue.name, formValue.ipAddress, finalModel);
-
-      // 2. Hardware-Einstellungen per Blind-POST senden
-      if (!this.loadError && !this.isLoadingPool) {
-        const hardwarePayload = {
-          stratumURL: formValue.poolUrl,
-          stratumPort: formValue.poolPort ? Number(formValue.poolPort) : 3333,
-          stratumUser: formValue.poolUser,
-          stratumPassword: formValue.poolPassword || 'x'
-        };
-
-        await this.minerService.updateMinerHardwareSettings(formValue.ipAddress, hardwarePayload);
-        alert('Die Einstellungen wurden an den Miner gesendet.');
-      }
-
-      this.isSaving = false;
       this.close.emit();
     }
   }

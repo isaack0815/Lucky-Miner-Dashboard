@@ -117,11 +117,27 @@ import { AddMinerModalComponent } from '../components/add-miner-modal.component'
         </div>
         
         <div class="widget-card">
-          <h2 class="widget-title">Status Logging</h2>
+          <h2 class="widget-title">Share-Protokoll</h2>
           <div class="activity-list">
-            <div class="text-muted" style="text-align: center; padding: 2rem 0;">
-              System-Abfragen aktiv.<br>Warte auf Miner-Daten...
-            </div>
+            @if (minerService.shareLogs().length === 0) {
+              <div class="text-muted" style="text-align: center; padding: 2rem 0;">
+                <svg style="margin: 0 auto 10px auto; opacity: 0.5" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                <br>Warte auf neue Shares...
+              </div>
+            } @else {
+              <div class="logs-container">
+                @for (log of minerService.shareLogs(); track log.id) {
+                  <div class="log-item">
+                    <div class="log-time">{{ log.timestamp | date:'HH:mm:ss' }}</div>
+                    <div class="log-content">
+                      <strong>{{ log.minerName }}</strong> hat 
+                      <span class="share-highlight">+{{ log.sharesAdded }} Share{{ log.sharesAdded > 1 ? 's' : '' }}</span> 
+                      gefunden.
+                    </div>
+                  </div>
+                }
+              </div>
+            }
           </div>
         </div>
       </div>
@@ -131,7 +147,7 @@ import { AddMinerModalComponent } from '../components/add-miner-modal.component'
       <app-add-miner-modal (close)="closeAddModal()"></app-add-miner-modal>
     }
   `,
-  styles: [ /* (Styles bleiben unverändert, um Platz zu sparen - ich belasse sie der Vollständigkeit halber aber drin, damit das Template nicht bricht) */`
+  styles: [`
     .dashboard-container { padding: 0 2rem 2rem 2rem; max-width: 1400px; margin: 0 auto; }
     .dashboard-header { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 2rem; }
     .page-title { font-size: 2rem; margin-bottom: 0.5rem; }
@@ -157,10 +173,13 @@ import { AddMinerModalComponent } from '../components/add-miner-modal.component'
     @media (max-width: 1024px) { .dashboard-widgets { grid-template-columns: 1fr; } }
     .widget-card { background: var(--bg-surface); border-radius: var(--radius-lg); padding: 1.5rem; box-shadow: var(--shadow-sm); display: flex; flex-direction: column; }
     .widget-title { font-size: 1.25rem; margin-bottom: 1.5rem; }
+    
+    /* Leerer Zustand & Listen */
     .empty-state { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 3rem 1rem; text-align: center; background: var(--bg-main); border-radius: var(--radius-md); border: 2px dashed #E5E7EB; flex-grow: 1; }
     .empty-icon { width: 64px; height: 64px; background: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: var(--text-muted); margin-bottom: 1rem; box-shadow: var(--shadow-sm); }
     .empty-state h3 { margin-bottom: 0.5rem; }
     .empty-state p { color: var(--text-muted); }
+    
     .miner-list { display: flex; flex-direction: column; gap: 1rem; }
     .miner-item { display: flex; justify-content: space-between; align-items: center; padding: 1rem; background-color: var(--bg-main); border-radius: var(--radius-md); transition: transform 0.2s; }
     .miner-item:hover { transform: translateY(-2px); box-shadow: var(--shadow-sm); }
@@ -172,6 +191,20 @@ import { AddMinerModalComponent } from '../components/add-miner-modal.component'
     .btn-icon { background: none; border: none; color: var(--text-muted); cursor: pointer; padding: 8px; border-radius: 50%; display: flex; align-items: center; justify-content: center; transition: all 0.2s; }
     .btn-icon:hover { background-color: #FEE2E2; color: var(--danger); }
     .text-muted { color: var(--text-muted); }
+
+    /* Neues Log Styling */
+    .activity-list { flex-grow: 1; overflow: hidden; display: flex; flex-direction: column; }
+    .logs-container { max-height: 400px; overflow-y: auto; display: flex; flex-direction: column; gap: 0.75rem; padding-right: 5px; }
+    .logs-container::-webkit-scrollbar { width: 4px; }
+    .logs-container::-webkit-scrollbar-track { background: transparent; }
+    .logs-container::-webkit-scrollbar-thumb { background-color: #E5E7EB; border-radius: 10px; }
+    
+    .log-item { display: flex; gap: 12px; padding: 10px; background-color: var(--bg-main); border-radius: var(--radius-md); font-size: 0.875rem; animation: slideIn 0.3s ease-out; }
+    .log-time { color: var(--text-muted); font-family: monospace; font-weight: 600; flex-shrink: 0; }
+    .log-content { color: var(--text-main); }
+    .share-highlight { color: #D97706; font-weight: 700; background-color: #FEF3C7; padding: 2px 6px; border-radius: 4px; }
+
+    @keyframes slideIn { from { opacity: 0; transform: translateX(-10px); } to { opacity: 1; transform: translateX(0); } }
   `]
 })
 export class DashboardComponent {
