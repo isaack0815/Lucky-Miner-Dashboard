@@ -15,7 +15,9 @@ export class MinerService {
   private readonly STORAGE_KEY = 'luckyminers_data';
   private readonly SETTINGS_KEY = 'luckyminers_settings';
   private http = inject(HttpClient);
-  private pollingIntervalId: any = null;
+  
+  // Der korrekte Typ statt any
+  private pollingIntervalId: ReturnType<typeof setInterval> | null = null;
 
   miners = signal<Miner[]>(this.loadFromStorage());
   settings = signal<AppSettings>(this.loadSettings());
