@@ -23,3 +23,14 @@ export interface ShareLog {
   sharesAdded: number;
   totalShares: number;
 }
+
+export interface MinerApiResponse {
+  sharesAccepted?: number;
+  hashRate?: number;
+  temp?: number;
+  bestDiff?: string;
+  uptimeSeconds?: number;
+  fanSpeed?: number;
+  power?: number;
+  stratumURL?: string;
+}

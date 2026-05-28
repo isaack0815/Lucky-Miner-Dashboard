@@ -2,7 +2,7 @@ import { Injectable, signal, effect, computed, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { catchError } from 'rxjs/operators';
 import { of, firstValueFrom } from 'rxjs';
-import { Miner, ShareLog } from '../models/miner.model';
+import { Miner, ShareLog, MinerApiResponse } from '../models/miner.model';
 
 @Injectable({
   providedIn: 'root'
@@ -80,7 +80,7 @@ export class MinerService {
     for (const miner of currentMiners) {
       try {
         const stats = await firstValueFrom(
-          this.http.get<any>(this.getApiUrl(miner.ipAddress, '/api/system/info')).pipe(
+          this.http.get<MinerApiResponse>(this.getApiUrl(miner.ipAddress, '/api/system/info')).pipe(
             catchError(() => of(null))
           )
         );

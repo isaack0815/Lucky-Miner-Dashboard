@@ -8,11 +8,11 @@ import { MinerService } from '../services/miner.service';
   standalone: true,
   imports: [CommonModule, ReactiveFormsModule],
   template: `
-    <div class="modal-backdrop" (click)="close.emit()">
+    <div class="modal-backdrop" (click)="closeModal.emit()">
       <div class="modal-card" (click)="$event.stopPropagation()">
         <div class="modal-header">
           <h2 class="modal-title">Neuen Miner hinzufügen</h2>
-          <button class="close-btn" (click)="close.emit()">
+          <button class="close-btn" (click)="closeModal.emit()">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
           </button>
         </div>
@@ -46,7 +46,7 @@ import { MinerService } from '../services/miner.service';
           }
 
           <div class="modal-footer">
-            <button type="button" class="btn-secondary" (click)="close.emit()">Abbrechen</button>
+            <button type="button" class="btn-secondary" (click)="closeModal.emit()">Abbrechen</button>
             <button type="submit" class="btn-primary" [disabled]="minerForm.invalid">Miner speichern</button>
           </div>
         </form>
@@ -191,7 +191,7 @@ import { MinerService } from '../services/miner.service';
   `]
 })
 export class AddMinerModalComponent {
-  @Output() close = new EventEmitter<void>();
+  @Output() closeModal = new EventEmitter<void>();
   minerForm: FormGroup;
 
   constructor(private fb: FormBuilder, private minerService: MinerService) {
@@ -213,7 +213,7 @@ export class AddMinerModalComponent {
         : formValue.model;
 
       this.minerService.addMiner(formValue.name, formValue.ipAddress, finalModel);
-      this.close.emit();
+      this.closeModal.emit();
     }
   }
 }

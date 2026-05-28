@@ -116,13 +116,13 @@ import { Miner } from '../models/miner.model';
     </div>
 
     @if (showAddModal) {
-      <app-add-miner-modal (close)="closeAddModal()"></app-add-miner-modal>
+      <app-add-miner-modal (closeModal)="closeAddModal()"></app-add-miner-modal>
     }
 
     @if (selectedMinerToEdit) {
       <app-edit-miner-modal 
         [miner]="selectedMinerToEdit" 
-        (close)="closeEditModal()">
+        (closeModal)="closeEditModal()">
       </app-edit-miner-modal>
     }
   `,

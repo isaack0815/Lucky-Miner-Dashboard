@@ -144,7 +144,7 @@ import { AddMinerModalComponent } from '../components/add-miner-modal.component'
     </div>
 
     @if (showAddModal) {
-      <app-add-miner-modal (close)="closeAddModal()"></app-add-miner-modal>
+      <app-add-miner-modal (closeModal)="closeAddModal()"></app-add-miner-modal>
     }
   `,
   styles: [`
