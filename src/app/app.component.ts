@@ -5,13 +5,17 @@ import { DashboardComponent } from './pages/dashboard.component';
 import { MyMinersComponent } from './pages/my-miners.component';
 import { StatsComponent } from './pages/stats.component';
 import { SettingsComponent } from './pages/settings.component';
+import { ToastComponent } from './components/toast.component';
 import { NavigationService } from './services/navigation.service';
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [SidebarComponent, HeaderComponent, DashboardComponent, MyMinersComponent, StatsComponent, SettingsComponent],
+  imports: [SidebarComponent, HeaderComponent, DashboardComponent, MyMinersComponent, StatsComponent, SettingsComponent, ToastComponent],
   template: `
+    <!-- Globale Toasts -->
+    <app-toasts></app-toasts>
+
     <div class="app-layout">
       <app-sidebar></app-sidebar>
       <div class="main-wrapper">

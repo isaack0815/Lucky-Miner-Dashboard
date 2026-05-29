@@ -3,6 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { catchError } from 'rxjs/operators';
 import { of, firstValueFrom } from 'rxjs';
 import { Miner, ShareLog, MinerApiResponse } from '../models/miner.model';
+import { ToastService } from './toast.service';
 
 export interface AppSettings {
   refreshInterval: number; // in Millisekunden
@@ -14,7 +15,9 @@ export interface AppSettings {
 export class MinerService {
   private readonly STORAGE_KEY = 'luckyminers_data';
   private readonly SETTINGS_KEY = 'luckyminers_settings';
+  
   private http = inject(HttpClient);
+  private toastService = inject(ToastService);
   
   private pollingIntervalId: ReturnType<typeof setInterval> | null = null;
   private isRefreshing = false; // Sperre, um überlappende Abfragen zu verhindern
@@ -145,9 +148,10 @@ export class MinerService {
               return m;
             }));
 
-            // Log erstellen, falls es wirklich ein Zuwachs war
+            // Log erstellen & Toast anzeigen, falls es wirklich ein Zuwachs war
             if (diffToLog > 0) {
               this.addShareLog(miner.id, miner.name, diffToLog, newShares);
+              this.toastService.success(`⛏️ ${miner.name} hat ${diffToLog} neue(n) Share(s) gefunden!`);
             }
           } else {
             this.miners.update(ms => ms.map(m => m.id === miner.id ? {...m, status: 'offline'} : m));
@@ -189,6 +193,7 @@ export class MinerService {
       addedAt: new Date().toISOString()
     };
     this.miners.update(current => [...current, newMiner]);
+    this.toastService.info(`Miner "${name}" hinzugefügt.`);
     this.refreshAll();
   }
 
@@ -196,17 +201,20 @@ export class MinerService {
     this.miners.update(current => current.map(m => 
       m.id === id ? { ...m, name, ipAddress, model } : m
     ));
+    this.toastService.success(`Miner "${name}" gespeichert.`);
     this.refreshAll(); 
   }
 
   deleteMiner(id: string) {
     this.miners.update(current => current.filter(m => m.id !== id));
+    this.toastService.info('Miner wurde entfernt.');
   }
 
   restartMiner(id: string) {
     const miner = this.miners().find(m => m.id === id);
     if (miner) {
       fetch(this.getApiUrl(miner.ipAddress, '/api/system/restart'), { method: 'POST', mode: 'no-cors' }).catch(e => console.error(e));
+      this.toastService.warning(`Neustart an ${miner.name} gesendet.`);
     }
   }
 
@@ -214,6 +222,7 @@ export class MinerService {
     const miner = this.miners().find(m => m.id === id);
     if (miner) {
       fetch(this.getApiUrl(miner.ipAddress, '/api/system/identify'), { method: 'POST', mode: 'no-cors' }).catch(e => console.error(e));
+      this.toastService.info(`Display von ${miner.name} blinkt.`);
     }
   }
 
@@ -221,6 +230,7 @@ export class MinerService {
 
   updateRefreshInterval(ms: number) {
     this.settings.update(s => ({ ...s, refreshInterval: ms }));
+    this.toastService.success(`Abfrage-Intervall auf ${ms / 1000} Sekunden gesetzt.`);
   }
 
   exportData() {
@@ -232,6 +242,7 @@ export class MinerService {
     a.download = `luckyminer-backup-${new Date().toISOString().slice(0, 10)}.json`;
     a.click();
     window.URL.revokeObjectURL(url);
+    this.toastService.info('Backup wird heruntergeladen...');
   }
 
   importData(jsonString: string): boolean {
@@ -240,10 +251,12 @@ export class MinerService {
       if (Array.isArray(data)) {
         this.miners.set(data);
         this.refreshAll();
+        this.toastService.success('Daten erfolgreich importiert!');
         return true;
       }
       return false;
     } catch(e) {
+      this.toastService.error('Fehler beim Importieren der Daten.');
       return false;
     }
   }
@@ -251,5 +264,6 @@ export class MinerService {
   resetAllData() {
     this.miners.set([]);
     this.shareLogs.set([]);
+    this.toastService.warning('Alle Daten wurden gelöscht.');
   }
 }
