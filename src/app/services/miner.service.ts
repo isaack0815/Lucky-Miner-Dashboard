@@ -16,14 +16,13 @@ export class MinerService {
   private readonly SETTINGS_KEY = 'luckyminers_settings';
   private http = inject(HttpClient);
   
-  // Der korrekte Typ statt any
   private pollingIntervalId: ReturnType<typeof setInterval> | null = null;
+  private isRefreshing = false; // Sperre, um überlappende Abfragen zu verhindern
 
   miners = signal<Miner[]>(this.loadFromStorage());
   settings = signal<AppSettings>(this.loadSettings());
   searchTerm = signal<string>('');
   
-  // Signal für die Share-Logs
   shareLogs = signal<ShareLog[]>([]);
   
   filteredMiners = computed(() => {
@@ -59,12 +58,10 @@ export class MinerService {
   );
 
   constructor() {
-    // Automatisches Speichern der Miner bei Änderungen
     effect(() => {
       localStorage.setItem(this.STORAGE_KEY, JSON.stringify(this.miners()));
     });
     
-    // Automatisches Anwenden und Speichern der Einstellungen (Polling)
     effect(() => {
       const currentSettings = this.settings();
       localStorage.setItem(this.SETTINGS_KEY, JSON.stringify(currentSettings));
@@ -84,7 +81,7 @@ export class MinerService {
   private loadSettings(): AppSettings {
     try {
       const stored = localStorage.getItem(this.SETTINGS_KEY);
-      return stored ? JSON.parse(stored) : { refreshInterval: 10000 }; // Standard: 10 Sekunden
+      return stored ? JSON.parse(stored) : { refreshInterval: 10000 };
     } catch(e) {
       return { refreshInterval: 10000 };
     }
@@ -99,46 +96,68 @@ export class MinerService {
     if (this.pollingIntervalId) {
       clearInterval(this.pollingIntervalId);
     }
-    this.refreshAll(); // Direkt einmal abfragen
+    this.refreshAll();
     this.pollingIntervalId = setInterval(() => this.refreshAll(), intervalMs);
   }
 
   async refreshAll() {
-    const currentMiners = this.miners();
-    for (const miner of currentMiners) {
-      try {
-        const stats = await firstValueFrom(
-          this.http.get<MinerApiResponse>(this.getApiUrl(miner.ipAddress, '/api/system/info')).pipe(
-            catchError(() => of(null))
-          )
-        );
+    // Wenn bereits eine Abfrage läuft, breche ab um Überlappungen zu vermeiden
+    if (this.isRefreshing) return;
+    this.isRefreshing = true;
 
-        if (stats) {
-          const newShares = stats.sharesAccepted || 0;
-          
-          if (miner.status === 'online' && newShares > miner.shares) {
-            const diff = newShares - miner.shares;
-            this.addShareLog(miner.id, miner.name, diff, newShares);
+    try {
+      const currentMiners = this.miners();
+      
+      // Parallel abfragen, damit es schneller geht
+      await Promise.all(currentMiners.map(async (miner) => {
+        try {
+          const stats = await firstValueFrom(
+            this.http.get<MinerApiResponse>(this.getApiUrl(miner.ipAddress, '/api/system/info')).pipe(
+              catchError(() => of(null))
+            )
+          );
+
+          if (stats) {
+            const newShares = stats.sharesAccepted || 0;
+            let diffToLog = 0;
+
+            // Atomares Update: Wir holen uns den absolut neusten Zustand aus dem Signal
+            this.miners.update(ms => ms.map(m => {
+              if (m.id === miner.id) {
+                // Nur loggen, wenn der Miner schon vorher online war und Shares > 0 hatte
+                if (m.status === 'online' && m.shares > 0 && newShares > m.shares) {
+                  diffToLog = newShares - m.shares;
+                }
+
+                return {
+                  ...m,
+                  status: 'online',
+                  hashrate: (stats.hashRate || 0) / 1000, 
+                  temp: stats.temp || 0,
+                  shares: newShares,
+                  bestDiff: stats.bestDiff,
+                  uptimeSeconds: stats.uptimeSeconds,
+                  fanSpeed: stats.fanSpeed,
+                  power: stats.power,
+                  pool: stats.stratumURL
+                };
+              }
+              return m;
+            }));
+
+            // Log erstellen, falls es wirklich ein Zuwachs war
+            if (diffToLog > 0) {
+              this.addShareLog(miner.id, miner.name, diffToLog, newShares);
+            }
+          } else {
+            this.miners.update(ms => ms.map(m => m.id === miner.id ? {...m, status: 'offline'} : m));
           }
-
-          this.miners.update(ms => ms.map(m => m.id === miner.id ? {
-            ...m,
-            status: 'online',
-            hashrate: (stats.hashRate || 0) / 1000, 
-            temp: stats.temp || 0,
-            shares: newShares,
-            bestDiff: stats.bestDiff,
-            uptimeSeconds: stats.uptimeSeconds,
-            fanSpeed: stats.fanSpeed,
-            power: stats.power,
-            pool: stats.stratumURL
-          } : m));
-        } else {
+        } catch (e) {
           this.miners.update(ms => ms.map(m => m.id === miner.id ? {...m, status: 'offline'} : m));
         }
-      } catch (e) {
-        this.miners.update(ms => ms.map(m => m.id === miner.id ? {...m, status: 'offline'} : m));
-      }
+      }));
+    } finally {
+      this.isRefreshing = false;
     }
   }
 
@@ -219,7 +238,6 @@ export class MinerService {
     try {
       const data = JSON.parse(jsonString);
       if (Array.isArray(data)) {
-        // Optionale Validierung ob die Struktur ungefähr passt könnte man hier machen
         this.miners.set(data);
         this.refreshAll();
         return true;
